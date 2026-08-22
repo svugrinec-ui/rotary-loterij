@@ -11,7 +11,8 @@ import {
 import { IconTrophy } from '@/components/Icons';
 import ExportMailKnop from './ExportMailKnop';
 import FotoKiezer from '@/components/FotoKiezer';
-import type { Ronde, Doel, Winnaar } from '@/lib/types';
+import WinnaarRondeKeuze from '@/components/WinnaarRondeKeuze';
+import type { Ronde, Doel, Winnaar, TrekkingLive } from '@/lib/types';
 import {
   login,
   logout,
@@ -77,6 +78,42 @@ export default async function BeheerPage({
   const rondes = (rondesData as Ronde[] | null) ?? [];
   const doelen = (doelenData as Doel[] | null) ?? [];
   const winnaars = (winnaarsData as Winnaar[] | null) ?? [];
+
+  /**
+   * Het formulier "Winnaar toevoegen" vult zich met de laatste trekking, zodat
+   * je na de show alleen nog foto's hoeft te kiezen. Alleen als die ronde nog
+   * geen winnaar in de galerij heeft — anders zou je een dubbele maken.
+   */
+  const { data: liveData } = await sb
+    .from('trekking_live')
+    .select('*')
+    .order('bijgewerkt_op', { ascending: false })
+    .limit(1);
+  const laatste = ((liveData as TrekkingLive[] | null) ?? [])[0] ?? null;
+  const trekkingRonde = laatste
+    ? rondes.find((r) => r.id === laatste.ronde_id) ?? null
+    : null;
+  const alInGalerij = laatste
+    ? winnaars.some((w) => w.ronde_id === laatste.ronde_id)
+    : false;
+  const suggestie =
+    laatste?.winnaar_naam && trekkingRonde && !alInGalerij
+      ? { naam: laatste.winnaar_naam, ronde: trekkingRonde }
+      : null;
+
+  // De hoofdprijs van die ronde: titel + aanbieder voor het formulier.
+  let suggestieExperience: { titel: string; aanbieder: string | null } | null = null;
+  if (suggestie) {
+    const { data: expData } = await sb
+      .from('experiences')
+      .select('titel, aanbieder')
+      .eq('ronde_id', suggestie.ronde.id)
+      .order('sort', { ascending: true })
+      .limit(1);
+    suggestieExperience =
+      ((expData as { titel: string; aanbieder: string | null }[] | null) ?? [])[0] ??
+      null;
+  }
   const instellingen = await getInstellingen();
   const vandaag = new Date().toISOString().slice(0, 10);
   const dezeMaand = vandaag.slice(0, 8) + '01';
@@ -315,54 +352,67 @@ export default async function BeheerPage({
           zonder de app? Dan voeg je de winnaar hieronder alsnog toe.
         </p>
 
-        <form className="panel" action={maakWinnaar}>
+        <form className="panel" action={maakWinnaar} key={suggestie?.ronde.id ?? 'leeg'}>
           <h3 style={{ marginTop: 0 }}>Winnaar toevoegen</h3>
+
+          {suggestie && (
+            <div className="notice notice-ok">
+              Ingevuld met de trekking van{' '}
+              <strong>{datumLabel(suggestie.ronde.maand)}</strong> —{' '}
+              {suggestie.naam} won de hoofdprijs. Klopt er iets niet? Pas het
+              gewoon aan.
+            </div>
+          )}
 
           <div className="inline-form">
             <div>
               <label htmlFor="w-maand">Datum trekking</label>
-              <input id="w-maand" name="maand" type="date" defaultValue={vandaag} required />
+              <input
+                id="w-maand"
+                name="maand"
+                type="date"
+                defaultValue={suggestie?.ronde.maand.slice(0, 10) ?? vandaag}
+                required
+              />
             </div>
             <div>
               <label htmlFor="w-naam">Naam winnaar</label>
-              <input id="w-naam" name="naam" type="text" required />
+              <input
+                id="w-naam"
+                name="naam"
+                type="text"
+                defaultValue={suggestie?.naam ?? ''}
+                required
+              />
             </div>
           </div>
 
-          <label htmlFor="w-ronde">Bij welke loterijronde hoort dit?</label>
-          <select id="w-ronde" name="ronde_id" defaultValue="">
-            <option value="">Geen ronde — losse week (opbrengst hieronder)</option>
-            {rondes.map((r) => (
-              <option key={r.id} value={r.id}>
-                {datumLabel(r.maand)} — {r.naam}
-              </option>
-            ))}
-          </select>
-          <p className="muted" style={{ margin: '6px 0 0', fontSize: 14 }}>
-            Kies je een ronde, dan wordt de weekopbrengst automatisch uit de
-            betaalde loten van die ronde gehaald.
-          </p>
+          <WinnaarRondeKeuze
+            rondes={rondes.map((r) => ({ id: r.id, maand: r.maand, naam: r.naam }))}
+            standaard={suggestie?.ronde.id ?? ''}
+          />
 
           <div className="inline-form" style={{ marginTop: 12 }}>
             <div>
               <label htmlFor="w-exp">Experience</label>
-              <input id="w-exp" name="experience_titel" type="text" required />
+              <input
+                id="w-exp"
+                name="experience_titel"
+                type="text"
+                defaultValue={suggestieExperience?.titel ?? ''}
+                required
+              />
             </div>
             <div>
               <label htmlFor="w-aanbieder">Aangeboden door</label>
-              <input id="w-aanbieder" name="aanbieder" type="text" />
+              <input
+                id="w-aanbieder"
+                name="aanbieder"
+                type="text"
+                defaultValue={suggestieExperience?.aanbieder ?? ''}
+              />
             </div>
           </div>
-
-          <label htmlFor="w-opbrengst">Opbrengst deze week (€) — alleen zonder ronde</label>
-          <input
-            id="w-opbrengst"
-            name="opbrengst"
-            type="number"
-            step="0.01"
-            min="0"
-            defaultValue={0}
-          />
 
           <label htmlFor="w-toelichting">Toelichting (optioneel)</label>
           <textarea id="w-toelichting" name="toelichting" placeholder="Kort verhaaltje bij de foto's" />

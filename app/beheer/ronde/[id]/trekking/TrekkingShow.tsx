@@ -32,6 +32,11 @@ interface Gewonnen {
   lot: Lot;
 }
 
+/** Namen vergelijken zonder gedoe met hoofdletters of spaties. */
+function sleutel(naam: string): string {
+  return naam.trim().toLowerCase();
+}
+
 export default function TrekkingShow({
   rondeId,
   rondeNaam,
@@ -39,10 +44,11 @@ export default function TrekkingShow({
   experiences,
   betaaldeLoten,
 }: Props) {
-  const deelnemers = new Set(betaaldeLoten.map((l) => l.naam)).size;
-  // Er wordt per lot getrokken (elk lot wint hoogstens één keer); wie meer
-  // loten heeft, maakt meer kans en kan dus meer dan één prijs winnen.
-  const maxPrijzen = Math.max(1, Math.min(betaaldeLoten.length, 10));
+  const deelnemers = new Set(betaaldeLoten.map((l) => sleutel(l.naam))).size;
+  // Er wordt per lot getrokken — meer loten is dus meer kans — maar wie een
+  // prijs wint, gaat er met al zijn loten uit. Niemand wint twee keer in
+  // dezelfde trekking, en daarmee zijn er nooit meer prijzen dan deelnemers.
+  const maxPrijzen = Math.max(1, Math.min(deelnemers, 10));
 
   const [aantal, setAantal] = useState(Math.min(5, maxPrijzen));
   // De hoofdprijs (experience + aanbieder) komt uit de ronde — niet bewerkbaar hier.
@@ -146,11 +152,14 @@ export default function TrekkingShow({
       prijsTotaal: prijzen.length,
     });
 
+    // Laat alleen nummers voorbijkomen die nog meedoen.
+    const rolNums = pool.length > 0 ? pool.map((l) => l.lotnummer) : poolNums;
+
     let verstreken = 0;
     let delay = 45;
     const totaal = 2600;
     const tick = () => {
-      setDisplay(poolNums[Math.floor(Math.random() * poolNums.length)]);
+      setDisplay(rolNums[Math.floor(Math.random() * rolNums.length)]);
       verstreken += delay;
       if (verstreken >= totaal) {
         setDisplay(winnaar.lotnummer);
@@ -158,7 +167,8 @@ export default function TrekkingShow({
         setOnthuld(winnaar);
         // Cijfer voor cijfer, gelijk met de telefoons in de zaal.
         onthulCijfers(winnaar.lotnummer);
-        setPool((prev) => prev.filter((l) => l.lotnummer !== winnaar.lotnummer));
+        // De winnaar gaat er met al zijn loten uit: niemand wint twee keer.
+        setPool((prev) => prev.filter((l) => sleutel(l.naam) !== sleutel(winnaar.naam)));
         setWinnaars((prev) => [
           ...prev,
           { prijs: prijzen[index].label, hoofdprijs: prijzen[index].hoofdprijs, lot: winnaar },
@@ -184,7 +194,16 @@ export default function TrekkingShow({
     setDisplay(null);
     if (index + 1 >= prijzen.length) {
       setFase('klaar');
-      zendUit({ fase: 'klaar', prijsIndex: index, prijsTotaal: prijzen.length });
+      // De hoofdprijs-winnaar blijft in de uitzending staan: daarmee vult het
+      // beheerformulier zich in als de galerij nog niet gevuld is. De zaal ziet
+      // hier niets meer van — bij fase 'klaar' is de trekking voorbij.
+      const hoofd = winnaars.find((w) => w.hoofdprijs);
+      zendUit({
+        fase: 'klaar',
+        prijsIndex: index,
+        prijsTotaal: prijzen.length,
+        winnaar: hoofd?.lot ?? null,
+      });
     } else {
       setIndex((i) => i + 1);
       zendUit({
@@ -197,7 +216,7 @@ export default function TrekkingShow({
   }
 
   // Winnaar accepteert niet: haal 'm uit de uitslag en trek opnieuw voor
-  // DEZELFDE prijs. Het geweigerde lot is al uit de pool, dus het komt niet terug.
+  // DEZELFDE prijs. Wie geweigerd heeft is al uit de pool en komt niet terug.
   function herkans() {
     stopCijfers();
     setWinnaars((prev) => prev.slice(0, -1));
@@ -246,7 +265,9 @@ export default function TrekkingShow({
           <div className="panel">
             <p className="muted" style={{ marginTop: 0 }}>
               {betaaldeLoten.length} betaalde loten van {deelnemers} deelnemers.
-              De hoofdprijs wordt als laatste getrokken.
+              De hoofdprijs wordt als laatste getrokken. Wie een prijs wint, doet
+              met al zijn loten niet meer mee voor de volgende — niemand wint dus
+              twee keer op dezelfde avond.
             </p>
 
             <label>Aantal prijzen</label>
@@ -435,7 +456,17 @@ export default function TrekkingShow({
       )}
 
       <div className="trekking-actions">
-        {!onthuld ? (
+        {!onthuld && pool.length === 0 ? (
+          // Kan gebeuren als winnaars achter elkaar weigeren: iedereen is op.
+          <div className="trekking-label">
+            Alle deelnemers hebben al een prijs. Ga naar de uitslag.
+            <div style={{ marginTop: 12 }}>
+              <button className="btn btn-groot" onClick={() => setFase('klaar')}>
+                Naar de uitslag →
+              </button>
+            </div>
+          </div>
+        ) : !onthuld ? (
           <button className="btn btn-gold btn-groot" onClick={trek} disabled={cycling}>
             {cycling ? 'Trekken…' : 'Trek de winnaar'}
           </button>
