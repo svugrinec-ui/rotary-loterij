@@ -21,6 +21,7 @@ import {
   wijzigDoel,
   verwijderDoel,
   zetWinnaarPublicatie,
+  maakWinnaar,
   wijzigInstellingen,
 } from '@/lib/actions';
 
@@ -308,10 +309,73 @@ export default async function BeheerPage({
         )}
 
         <p className="muted">
-          Winnaars komen automatisch uit de{' '}
-          <span style={{ fontWeight: 600 }}>presentatie-trekking</span>. Hier beheer
-          je ze: publiceren/verbergen, foto&apos;s toevoegen (Bewerk) of verwijderen.
+          Winnaars komen normaal uit de{' '}
+          <span style={{ fontWeight: 600 }}>presentatie-trekking</span> — die zet ze
+          er aan het eind zelf in. Is dat scherm te vroeg gesloten, of trok je
+          zonder de app? Dan voeg je de winnaar hieronder alsnog toe.
         </p>
+
+        <form className="panel" action={maakWinnaar}>
+          <h3 style={{ marginTop: 0 }}>Winnaar toevoegen</h3>
+
+          <div className="inline-form">
+            <div>
+              <label htmlFor="w-maand">Datum trekking</label>
+              <input id="w-maand" name="maand" type="date" defaultValue={vandaag} required />
+            </div>
+            <div>
+              <label htmlFor="w-naam">Naam winnaar</label>
+              <input id="w-naam" name="naam" type="text" required />
+            </div>
+          </div>
+
+          <label htmlFor="w-ronde">Bij welke loterijronde hoort dit?</label>
+          <select id="w-ronde" name="ronde_id" defaultValue="">
+            <option value="">Geen ronde — losse week (opbrengst hieronder)</option>
+            {rondes.map((r) => (
+              <option key={r.id} value={r.id}>
+                {datumLabel(r.maand)} — {r.naam}
+              </option>
+            ))}
+          </select>
+          <p className="muted" style={{ margin: '6px 0 0', fontSize: 14 }}>
+            Kies je een ronde, dan wordt de weekopbrengst automatisch uit de
+            betaalde loten van die ronde gehaald.
+          </p>
+
+          <div className="inline-form" style={{ marginTop: 12 }}>
+            <div>
+              <label htmlFor="w-exp">Experience</label>
+              <input id="w-exp" name="experience_titel" type="text" required />
+            </div>
+            <div>
+              <label htmlFor="w-aanbieder">Aangeboden door</label>
+              <input id="w-aanbieder" name="aanbieder" type="text" />
+            </div>
+          </div>
+
+          <label htmlFor="w-opbrengst">Opbrengst deze week (€) — alleen zonder ronde</label>
+          <input
+            id="w-opbrengst"
+            name="opbrengst"
+            type="number"
+            step="0.01"
+            min="0"
+            defaultValue={0}
+          />
+
+          <label htmlFor="w-toelichting">Toelichting (optioneel)</label>
+          <textarea id="w-toelichting" name="toelichting" placeholder="Kort verhaaltje bij de foto's" />
+
+          <label>Foto&apos;s (optioneel) — meerdere tegelijk mag</label>
+          <FotoKiezer multiple />
+
+          <div style={{ marginTop: 14 }}>
+            <button className="btn" type="submit">
+              Winnaar publiceren
+            </button>
+          </div>
+        </form>
       </section>
 
       {/* ---------- Goede doelen (ingeklapt) ---------- */}

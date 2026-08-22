@@ -3,7 +3,12 @@
 import { useState, useEffect, useRef } from 'react';
 import { euro } from '@/lib/format';
 import { BUNDELS, bundelVoorBedrag } from '@/lib/bundels';
-import { bewaarBetaalStap, bewaarMijnLoten, leesMijnLoten } from '@/lib/mijnLoten';
+import {
+  bewaarBetaalStap,
+  bewaarMijnLoten,
+  leesMijnLoten,
+  vergeetMijnLoten,
+} from '@/lib/mijnLoten';
 import MijnLotenRij, { lotenTitel } from '@/components/MijnLotenRij';
 import Stappen from '@/components/Stappen';
 import { IconLock } from '@/components/Icons';
@@ -257,6 +262,17 @@ export default function MeedoenForm({ rondeId }: Props) {
     }).catch(() => {});
   }
 
+  /**
+   * Van dit toestel wissen. Nodig op een gedeelde telefoon, na een test, of
+   * als iemand anders zich hier heeft ingeschreven: anders blijft dat scherm
+   * terugkomen. De loten zelf blijven gewoon meedoen met de trekking — dit
+   * wist alleen wat deze browser onthoudt.
+   */
+  function wisVanToestel() {
+    vergeetMijnLoten();
+    opnieuw();
+  }
+
   function opnieuw() {
     setBetaalStap(false);
     setBetaalInBeeld(false);
@@ -413,6 +429,14 @@ export default function MeedoenForm({ rondeId }: Props) {
             Nog iemand inschrijven
           </button>
         </div>
+
+        {hersteld && (
+          <div style={{ textAlign: 'center', marginTop: 12 }}>
+            <button className="knop-link" onClick={wisVanToestel}>
+              Niet jouw loten? Van dit toestel wissen
+            </button>
+          </div>
+        )}
       </>
     );
   }
