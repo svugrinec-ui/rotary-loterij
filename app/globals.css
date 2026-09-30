@@ -248,8 +248,9 @@ section { margin: 40px 0; }
   margin: 20px 0;
 }
 label { display: block; font-weight: 600; margin: 14px 0 6px; font-size: 15px; }
+label.checkbox-rij { display: flex; align-items: center; gap: 8px; margin: 8px 0 0; font-size: 14px; color: var(--muted); }
 input[type="text"], input[type="password"], input[type="number"],
-input[type="email"], input[type="date"], textarea, select {
+input[type="email"], input[type="date"], input[type="url"], textarea, select {
   width: 100%;
   padding: 11px 13px;
   border: 1px solid var(--line);

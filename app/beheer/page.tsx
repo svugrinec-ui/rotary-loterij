@@ -497,8 +497,58 @@ export default async function BeheerPage({
 
       {/* ---------- Instellingen: penningmeester & mail (ingeklapt) ---------- */}
       <details className="beheer-inklap">
-        <summary>Instellingen — penningmeester &amp; e-mail</summary>
+        <summary>Instellingen — club, betalen, penningmeester &amp; e-mail</summary>
         <form className="panel" action={wijzigInstellingen}>
+          <h3 style={{ marginTop: 0 }}>Club</h3>
+          <label htmlFor="clubnaam">Clubnaam</label>
+          <input
+            id="clubnaam"
+            name="clubnaam"
+            type="text"
+            defaultValue={instellingen?.clubnaam ?? ''}
+            placeholder="Rotary Club Voorbeeldstad"
+          />
+          <p className="muted">
+            Staat in de kop en voettekst, in de export-mail en als app-naam op de
+            telefoon.
+          </p>
+
+          <hr style={{ border: 0, borderTop: '1px solid var(--line)', margin: '20px 0' }} />
+          <h3 style={{ marginTop: 0 }}>Betaallinks</h3>
+          <p className="muted" style={{ marginTop: 0 }}>
+            Per bundel een betaalverzoek-link (bijv. Rabobank- of ING-betaalverzoek,
+            of Tikkie). Na het kopen van loten opent deze link de bank-app. Geen
+            link = de bezoeker ziet &ldquo;betaal via de QR-code of vraag de
+            commissie&rdquo;.
+          </p>
+          {BUNDELS.map((b) => {
+            const huidig = instellingen?.betaallinks?.[String(b.bedrag)];
+            return (
+              <div key={b.bedrag} style={{ marginBottom: 12 }}>
+                <label htmlFor={`link-${b.bedrag}`}>
+                  {euro(b.bedrag)} — {b.loten} loten
+                </label>
+                <input
+                  id={`link-${b.bedrag}`}
+                  name={`betaallink_${b.bedrag}`}
+                  type="url"
+                  defaultValue={huidig?.link ?? ''}
+                  placeholder="https://betaalverzoek.rabobank.nl/betaalverzoek/?id=…"
+                />
+                <label className="checkbox-rij" style={{ fontWeight: 400 }}>
+                  <input
+                    type="checkbox"
+                    name={`zelfbedrag_${b.bedrag}`}
+                    defaultChecked={huidig?.zelfBedrag ?? false}
+                  />{' '}
+                  Link zonder vast bedrag (bezoeker vult zelf {euro(b.bedrag)} in)
+                </label>
+              </div>
+            );
+          })}
+
+          <hr style={{ border: 0, borderTop: '1px solid var(--line)', margin: '20px 0' }} />
+          <h3 style={{ marginTop: 0 }}>Penningmeester</h3>
           <p className="muted" style={{ marginTop: 0 }}>
             Naar dit adres wordt het financiële overzicht gemaild (knop bij de
             loterijrondes). De geheime mailsleutel staat los in de omgeving.

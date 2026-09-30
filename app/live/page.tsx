@@ -1,12 +1,13 @@
 import { publicClient } from '@/lib/supabase';
 import type { TrekkingLive } from '@/lib/types';
 import TrekkingLiveView from './TrekkingLive';
+import { getClubnaam } from '@/lib/instellingen';
 
 export const dynamic = 'force-dynamic';
 
-export const metadata = {
-  title: 'Live trekking — Loterij Soest-Baarn',
-};
+export async function generateMetadata() {
+  return { title: `Live trekking — Loterij ${await getClubnaam()}` };
+}
 
 export default async function LivePage() {
   const sb = publicClient();

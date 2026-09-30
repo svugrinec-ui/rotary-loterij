@@ -1,3 +1,5 @@
+import type { BetaalLinks } from './bundels';
+
 export type RondeStatus = 'open' | 'gesloten' | 'getrokken';
 
 export interface Ronde {
@@ -76,6 +78,8 @@ export interface Instellingen {
   afzender: string | null; // afzenderadres voor de export-mail (Resend)
   mail_intro: string | null; // bewerkbare intro-tekst van de export-mail
   mail_afsluiting: string | null; // bewerkbare afsluiting/ondertekening
+  clubnaam: string | null; // bijv. "Rotary Club Soest-Baarn"
+  betaallinks: BetaalLinks | null; // per bundelbedrag de betaalverzoek-link
   updated_at: string;
 }
 

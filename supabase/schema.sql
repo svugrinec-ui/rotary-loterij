@@ -66,7 +66,7 @@ create table if not exists public.doelen (
   created_at   timestamptz not null default now()
 );
 
--- Instellingen: één rij met penningmeester (naam/e-mail) en mail-afzender.
+-- Instellingen: één rij met clubnaam, betaallinks, penningmeester en mail-afzender.
 create table if not exists public.instellingen (
   id                   int primary key default 1 check (id = 1),
   penningmeester_naam  text,
@@ -74,6 +74,8 @@ create table if not exists public.instellingen (
   afzender             text,
   mail_intro           text,
   mail_afsluiting      text,
+  clubnaam             text,                          -- bijv. "Rotary Club Soest-Baarn"
+  betaallinks          jsonb not null default '{}',   -- per bundelbedrag: {"5": {"link": "…"}}
   updated_at           timestamptz not null default now()
 );
 insert into public.instellingen (id) values (1) on conflict (id) do nothing;

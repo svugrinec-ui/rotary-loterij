@@ -7,6 +7,7 @@ import type { SupabaseClient } from '@supabase/supabase-js';
 import { serviceClient } from '@/lib/supabase';
 import { winnaarFotos } from '@/lib/fotos';
 import { rondeOpbrengst, syncRondeOpbrengst } from '@/lib/ronde-opbrengst';
+import { BUNDELS, type BetaalLinks } from '@/lib/bundels';
 import {
   ADMIN_COOKIE,
   cookieOptions,
@@ -70,10 +71,21 @@ async function uploadFotos(
 // ---------- Instellingen ----------
 export async function wijzigInstellingen(fd: FormData) {
   await assertAdmin();
+  // Betaallinks per bundel; alleen echte https-links bewaren.
+  const betaallinks: BetaalLinks = {};
+  for (const b of BUNDELS) {
+    const link = str(fd, `betaallink_${b.bedrag}`);
+    if (!/^https:\/\/\S+$/i.test(link)) continue;
+    betaallinks[String(b.bedrag)] = fd.get(`zelfbedrag_${b.bedrag}`)
+      ? { link, zelfBedrag: true }
+      : { link };
+  }
   await serviceClient()
     .from('instellingen')
     .upsert({
       id: 1,
+      clubnaam: str(fd, 'clubnaam') || null,
+      betaallinks,
       penningmeester_naam: str(fd, 'penningmeester_naam') || null,
       penningmeester_email: str(fd, 'penningmeester_email') || null,
       afzender: str(fd, 'afzender') || null,
@@ -81,7 +93,8 @@ export async function wijzigInstellingen(fd: FormData) {
       mail_afsluiting: str(fd, 'mail_afsluiting') || null,
       updated_at: new Date().toISOString(),
     });
-  revalidatePath('/beheer');
+  // Clubnaam staat in de layout (alle pagina's), betaallinks op /meedoen.
+  revalidatePath('/', 'layout');
 }
 
 // ---------- Auth ----------

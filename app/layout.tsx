@@ -2,25 +2,30 @@ import type { Metadata, Viewport } from 'next';
 import Link from 'next/link';
 import { IconSettings } from '@/components/Icons';
 import TrekkingLiveOverlay from '@/components/TrekkingLiveOverlay';
+import { getClubnaam } from '@/lib/instellingen';
 import './globals.css';
 
-export const metadata: Metadata = {
-  title: 'Rotary Experiences — Loterij Soest-Baarn',
-  description:
-    'Winnaars, goede doelen en digitale loten van de dinsdagavondloterij van Rotary Club Soest-Baarn.',
-  // "Zet op beginscherm" op de iPhone: schermvullend, eigen naam onder het icoon.
-  appleWebApp: {
-    capable: true,
-    title: 'Loterij',
-    statusBarStyle: 'black-translucent',
-  },
-};
+// De clubnaam komt uit de instellingen (beheer), zodat elke club zijn eigen naam heeft.
+export async function generateMetadata(): Promise<Metadata> {
+  const club = await getClubnaam();
+  return {
+    title: `Rotary Experiences — Loterij ${club}`,
+    description: `Winnaars, goede doelen en digitale loten van de loterij van ${club}.`,
+    // "Zet op beginscherm" op de iPhone: schermvullend, eigen naam onder het icoon.
+    appleWebApp: {
+      capable: true,
+      title: 'Loterij',
+      statusBarStyle: 'black-translucent',
+    },
+  };
+}
 
 export const viewport: Viewport = {
   themeColor: '#17458f',
 };
 
-export default function RootLayout({ children }: { children: React.ReactNode }) {
+export default async function RootLayout({ children }: { children: React.ReactNode }) {
+  const club = await getClubnaam();
   return (
     <html lang="nl">
       <body>
@@ -32,7 +37,7 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
 
               <span className="brand-text">
                 <strong>Loterij</strong>
-                <small>Rotary Club Soest-Baarn</small>
+                <small>{club}</small>
               </span>
             </Link>
             <nav className="site-nav">
@@ -57,7 +62,7 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
         <TrekkingLiveOverlay />
         <footer className="site-footer">
           <div className="container">
-            <p>Rotary Club Soest-Baarn · Loterijcommissie</p>
+            <p>{club} · Loterijcommissie</p>
             <p className="footer-note">
               “De mooiste prijs zit niet in een fles wijn, maar in de tijd en
               aandacht die we met elkaar delen.”

@@ -4,51 +4,46 @@
 // Patroon: elke stap van €5 levert er een extra bonuslot bovenop
 // (3, 7, 11, 15) → hoe meer je koopt, hoe voordeliger.
 //
-// `qr` verwijst naar een betaal-QR-afbeelding in de map `public/`. Zet daar je
-// eigen QR-plaatjes neer (bijv. public/betaal-qr/5.png). Ontbreekt er één, dan
-// valt de meedoen-pagina terug op een algemene QR of een vriendelijke melding.
+// De betaallinks per bundel staan niet hier maar in de instellingen (beheer →
+// Instellingen), zodat elke club zijn eigen betaalverzoeken kan invullen.
 
 export interface Bundel {
   bedrag: number; // in euro's
   loten: number; // aantal loten dat je hiervoor krijgt
-  betaalLink?: string; // Rabobank-betaalverzoek: opent de bank-app / iDEAL
-  qr?: string; // betaal-QR-afbeelding (voor wie op een ander apparaat wil scannen)
+}
+
+export const BUNDELS: Bundel[] = [
+  { bedrag: 5, loten: 3 },
+  { bedrag: 10, loten: 7 },
+  { bedrag: 15, loten: 11 },
+  { bedrag: 20, loten: 15 },
+];
+
+/** Betaallink bij één bundel, zoals ingesteld in beheer. */
+export interface BetaalLink {
+  link: string; // betaalverzoek (bijv. Rabobank/ING/Tikkie): opent de bank-app / iDEAL
   zelfBedrag?: boolean; // link zonder vast bedrag: betaler vult zelf het bedrag in
 }
 
-// Optionele algemene betaal-QR als er geen specifieke per bundel is.
-export const BETAAL_QR_ALGEMEEN: string | undefined = undefined;
-
-export const BUNDELS: Bundel[] = [
-  {
-    bedrag: 5,
-    loten: 3,
-    betaalLink: 'https://betaalverzoek.rabobank.nl/betaalverzoek/?id=aVc7byXLQfyDcxw9JmsplQ',
-    qr: '/betaal-qr/5.png',
-  },
-  {
-    bedrag: 10,
-    loten: 7,
-    betaalLink: 'https://betaalverzoek.rabobank.nl/betaalverzoek/?id=6B1Z_IykSfy15-hNHlrKtA',
-    qr: '/betaal-qr/10.png',
-  },
-  {
-    bedrag: 15,
-    loten: 11,
-    betaalLink: 'https://betaalverzoek.rabobank.nl/betaalverzoek/?id=TcZeFyANQxuPr8daSgTpBQ',
-    qr: '/betaal-qr/15.png',
-  },
-  {
-    // De €20-link is het "bedrag zelf bepalen"-betaalverzoek: vul €20 in.
-    bedrag: 20,
-    loten: 15,
-    betaalLink: 'https://betaalverzoek.rabobank.nl/betaalverzoek/?id=WvohXnibT32TcPV_ahr1QQ',
-    qr: '/betaal-qr/20.png',
-    zelfBedrag: true,
-  },
-];
+/** Betaallinks per bundelbedrag, met het bedrag als sleutel ("5", "10", …). */
+export type BetaalLinks = Record<string, BetaalLink>;
 
 /** Zoekt de bundel bij een bedrag; null als het bedrag niet bestaat. */
 export function bundelVoorBedrag(bedrag: number): Bundel | null {
   return BUNDELS.find((b) => b.bedrag === bedrag) ?? null;
+}
+
+/** De ingestelde betaallink voor een bedrag, of null als er geen is. */
+export function betaalLinkVoor(links: BetaalLinks, bedrag: number): BetaalLink | null {
+  const l = links[String(bedrag)];
+  return l?.link ? l : null;
+}
+
+/** Naam van de bank achter een betaallink, voor de geruststellende regel onder de knop. */
+export function betaalDienst(link: string): string | null {
+  if (link.includes('rabobank.nl')) return 'Rabobank-betaalverzoek';
+  if (link.includes('ing.nl')) return 'ING-betaalverzoek';
+  if (link.includes('abnamro.nl')) return 'ABN AMRO-betaalverzoek';
+  if (link.includes('tikkie.me')) return 'Tikkie';
+  return null;
 }

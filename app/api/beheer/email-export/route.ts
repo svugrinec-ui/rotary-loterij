@@ -4,6 +4,7 @@ import { serviceClient } from '@/lib/supabase';
 import { financieelCsv, exportBestandsnaam } from '@/lib/export';
 import {
   getInstellingen,
+  CLUBNAAM_STANDAARD,
   MAIL_INTRO_STANDAARD,
   MAIL_AFSLUITING_STANDAARD,
 } from '@/lib/instellingen';
@@ -54,6 +55,8 @@ function mailHtml(
   datum: string,
   intro: string,
   afsluiting: string,
+  club: string,
+  logoUrl: string,
 ): string {
   const lijst = regels.length
     ? regels
@@ -85,10 +88,10 @@ function mailHtml(
             <td style="background-color:#17458f;background-image:linear-gradient(135deg,#17458f,#0f2f66);padding:26px 32px;">
               <table role="presentation" cellpadding="0" cellspacing="0" style="border-collapse:collapse;">
                 <tr>
-                  <td style="padding-right:16px;vertical-align:middle;"><img src="https://loterij.rotarysoestbaarn.nl/RotaryMoE-R_CMYK-C.png" width="46" height="46" alt="" style="display:block;" /></td>
+                  <td style="padding-right:16px;vertical-align:middle;"><img src="${logoUrl}" width="46" height="46" alt="" style="display:block;" /></td>
                   <td style="vertical-align:middle;">
                     <div style="color:#ffffff;font-size:26px;font-weight:800;letter-spacing:.2px;">Loterij</div>
-                    <div style="color:#bcd0f0;font-size:15px;font-weight:600;margin-top:2px;">Rotary Club Soest-Baarn</div>
+                    <div style="color:#bcd0f0;font-size:15px;font-weight:600;margin-top:2px;">${tekstNaarHtml(club)}</div>
                   </td>
                 </tr>
               </table>
@@ -113,7 +116,7 @@ function mailHtml(
             </td>
           </tr>
         </table>
-        <div style="font-size:12px;color:#9aa0b0;padding:16px;">Rotary Club Soest-Baarn &middot; Loterijcommissie</div>
+        <div style="font-size:12px;color:#9aa0b0;padding:16px;">${tekstNaarHtml(club)} &middot; Loterijcommissie</div>
       </td></tr>
     </table>
   </div>`;
@@ -200,6 +203,9 @@ export async function POST(req: Request) {
       : `Financieel overzicht loterij — ${datum.slice(0, 10)}`;
   const intro = inst?.mail_intro || MAIL_INTRO_STANDAARD;
   const afsluiting = inst?.mail_afsluiting || MAIL_AFSLUITING_STANDAARD;
+  const club = inst?.clubnaam?.trim() || CLUBNAAM_STANDAARD;
+  // Logo van het eigen domein waarop de app draait (werkt ook met een custom domein).
+  const logoUrl = `${new URL(req.url).origin}/RotaryMoE-R_CMYK-C.png`;
   const tekstRegels = regels
     .map((r) => `- ${r.naam} (${r.maand}): ${euro(r.opbrengst)}`)
     .join('\n');
@@ -227,6 +233,8 @@ export async function POST(req: Request) {
           datum.slice(0, 10),
           intro,
           afsluiting,
+          club,
+          logoUrl,
         ),
         text: `Beste ${naam || 'penningmeester'},\n\n${intro}\n\nTotaal opgehaald: ${euro(totaal)} (${euro(bankSom)} bank · ${euro(cashSom)} contant · ${batches.size} inschrijving(en))\n\n${tekstRegels}\n\n${afsluiting}`,
         attachments: [

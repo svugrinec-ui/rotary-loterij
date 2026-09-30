@@ -2,7 +2,13 @@
 
 import { useState, useEffect, useRef } from 'react';
 import { euro } from '@/lib/format';
-import { BUNDELS, bundelVoorBedrag } from '@/lib/bundels';
+import {
+  BUNDELS,
+  bundelVoorBedrag,
+  betaalLinkVoor,
+  betaalDienst,
+  type BetaalLinks,
+} from '@/lib/bundels';
 import {
   bewaarBetaalStap,
   bewaarMijnLoten,
@@ -15,6 +21,7 @@ import { IconLock } from '@/components/Icons';
 
 interface Props {
   rondeId: string;
+  betaalLinks: BetaalLinks; // uit de instellingen (beheer)
 }
 
 interface Toegekend {
@@ -23,7 +30,7 @@ interface Toegekend {
   bedrag: number;
 }
 
-export default function MeedoenForm({ rondeId }: Props) {
+export default function MeedoenForm({ rondeId, betaalLinks }: Props) {
   const [naam, setNaam] = useState('');
   const [bedrag, setBedrag] = useState<number>(BUNDELS[0]?.bedrag ?? 5);
   const [betaalwijze, setBetaalwijze] = useState<'bank' | 'cash'>('bank');
@@ -291,7 +298,8 @@ export default function MeedoenForm({ rondeId }: Props) {
 
   // ---------- Resultaat: eerst de loten, dan betalen ----------
   if (resultaat) {
-    const bundel = bundelVoorBedrag(resultaat.bedrag);
+    const betaal = betaalLinkVoor(betaalLinks, resultaat.bedrag);
+    const dienst = betaal ? betaalDienst(betaal.link) : null;
     return (
       <>
         {/* Verse aankoop → kort stap 2 (kijk, je loten). Zodra het betalen in
@@ -374,17 +382,17 @@ export default function MeedoenForm({ rondeId }: Props) {
             </div>
           ) : (
             <>
-              {bundel?.zelfBedrag && (
+              {betaal?.zelfBedrag && (
                 <div className="notice notice-info" style={{ marginTop: 14 }}>
                   Bij deze betaling vul je zélf het bedrag in — vul{' '}
                   <strong>{euro(resultaat.bedrag)}</strong> in je bank-app in.
                 </div>
               )}
 
-              {bundel?.betaalLink ? (
+              {betaal ? (
                 <a
                   className="betaal-cta"
-                  href={bundel.betaalLink}
+                  href={betaal.link}
                   target="_blank"
                   rel="noopener noreferrer"
                   style={{ marginTop: 14 }}
@@ -409,9 +417,11 @@ export default function MeedoenForm({ rondeId }: Props) {
                 </div>
               )}
 
-              <div className="betaal-veilig">
-                <IconLock size={13} /> Veilig betalen via Rabobank-betaalverzoek
-              </div>
+              {betaal && (
+                <div className="betaal-veilig">
+                  <IconLock size={13} /> Veilig betalen via {dienst ?? 'je eigen bank'}
+                </div>
+              )}
             </>
           )}
         </div>

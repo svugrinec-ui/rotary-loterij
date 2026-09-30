@@ -7,16 +7,18 @@ import TrekkingOfPagina from '@/components/TrekkingOfPagina';
 import type { Ronde, Experience, Winnaar, Doel } from '@/lib/types';
 import MeedoenForm from './MeedoenForm';
 import LotenOpzoeken from './LotenOpzoeken';
+import { getBetaalLinks } from '@/lib/instellingen';
 
 export const revalidate = 30;
 
 export default async function MeedoenPage() {
   const sb = publicClient();
 
-  const [{ data: rondesData }, { data: winnaars }, { data: doelen }] = await Promise.all([
+  const [{ data: rondesData }, { data: winnaars }, { data: doelen }, betaalLinks] = await Promise.all([
     sb.from('rondes').select('*').order('maand', { ascending: false }),
     sb.from('winnaars').select('maand,opbrengst,ronde_id').eq('gepubliceerd', true),
     sb.from('doelen').select('*'),
+    getBetaalLinks(),
   ]);
 
   const rondesAll = (rondesData as Ronde[] | null) ?? [];
@@ -105,7 +107,7 @@ export default async function MeedoenPage() {
         <div className="section-head">
           <h2>Steun het goede doel</h2>
         </div>
-        <MeedoenForm rondeId={ronde.id} />
+        <MeedoenForm rondeId={ronde.id} betaalLinks={betaalLinks} />
         <LotenOpzoeken />
 
         <p className="muted" style={{ textAlign: 'center', marginTop: 18 }}>
