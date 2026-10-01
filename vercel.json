@@ -1,7 +1,16 @@
 {
   "framework": "nextjs",
+  "regions": [
+    "dub1"
+  ],
   "crons": [
-    { "path": "/api/sync-rondes", "schedule": "0 5 * * *" },
-    { "path": "/api/demo-reset", "schedule": "10 2 * * *" }
+    {
+      "path": "/api/sync-rondes",
+      "schedule": "0 5 * * *"
+    },
+    {
+      "path": "/api/demo-reset",
+      "schedule": "10 2 * * *"
+    }
   ]
 }
