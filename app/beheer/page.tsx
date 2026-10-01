@@ -91,6 +91,11 @@ export default async function BeheerPage({
     ]);
 
   const rondes = (rondesData as Ronde[] | null) ?? [];
+  // Zichtbaar: de rondes van de afgelopen 5 weken en alles wat nog komt;
+  // oudere rondes staan ingeklapt eronder.
+  const grensRecent = new Date(Date.now() - 35 * 864e5).toLocaleDateString('sv-SE', { timeZone: 'Europe/Amsterdam' });
+  const recenteRondes = rondes.filter((r) => r.maand >= grensRecent);
+  const oudereRondes = rondes.filter((r) => r.maand < grensRecent);
   // Welke rondes hebben al een hoofdprijs (experience)?
   const { data: prijsData } = await sb.from('experiences').select('ronde_id');
   const metPrijs = new Set(((prijsData ?? []) as { ronde_id: string }[]).map((p) => p.ronde_id));
@@ -220,7 +225,7 @@ export default async function BeheerPage({
         )}
 
         {rondes.length > 0 && (
-          <div className="table-wrap">
+          <div className="table-wrap rondes-scroll">
             <table className="data">
               <thead>
                 <tr>
@@ -232,7 +237,7 @@ export default async function BeheerPage({
                 </tr>
               </thead>
               <tbody>
-                {rondes.map((r) => (
+                {recenteRondes.map((r) => (
                   <tr key={r.id}>
                     <td style={{ textAlign: 'center' }}>
                       <input
@@ -289,6 +294,82 @@ export default async function BeheerPage({
               </tbody>
             </table>
           </div>
+        )}
+        {oudereRondes.length > 0 && (
+          <details className="rondes-ouder">
+            <summary>
+              Oudere rondes ({oudereRondes.length}) — vóór {datumLabel(grensRecent)}
+            </summary>
+            <div className="table-wrap rondes-scroll">
+              <table className="data">
+                <thead>
+                  <tr>
+                    <th title="Aanvinken voor de CSV-export">Export</th>
+                    <th>Ronde</th>
+                    <th>Maand</th>
+                    <th>Status</th>
+                    <th></th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {oudereRondes.map((r) => (
+                    <tr key={r.id}>
+                      <td style={{ textAlign: 'center' }}>
+                        <input
+                          type="checkbox"
+                          name="ronde"
+                          value={r.id}
+                          aria-label={`Exporteer ${r.naam}`}
+                        />
+                      </td>
+                      <td>
+                        <Link href={`/beheer/ronde/${r.id}`}>{r.naam}</Link>
+                        {!metPrijs.has(r.id) && r.status !== 'getrokken' && (
+                          <span className="pill pill-flag" title="Voeg een hoofdprijs toe; daarna kan de ronde open">
+                            Hoofdprijs nog invullen
+                          </span>
+                        )}
+                      </td>
+                      <td>{maandLabel(r.maand)}</td>
+                      <td>
+                        <span
+                          className={`pill ${
+                            r.status === 'open' ? 'pill-ok' : 'pill-wait'
+                          }`}
+                        >
+                          {statusLabel[r.status]}
+                        </span>
+                      </td>
+                      <td>
+                        <div className="row-actions">
+                          <Link
+                            className="btn btn-ghost btn-sm"
+                            href={`/beheer/ronde/${r.id}`}
+                          >
+                            Beheer
+                          </Link>
+                          {r.status !== 'open' && (
+                            <form action={zetRondeStatus}>
+                              <input type="hidden" name="id" value={r.id} />
+                              <input type="hidden" name="status" value="open" />
+                              <button className="btn btn-ghost btn-sm">Open</button>
+                            </form>
+                          )}
+                          {r.status === 'open' && (
+                            <form action={zetRondeStatus}>
+                              <input type="hidden" name="id" value={r.id} />
+                              <input type="hidden" name="status" value="gesloten" />
+                              <button className="btn btn-ghost btn-sm">Sluit</button>
+                            </form>
+                          )}
+                        </div>
+                      </td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
+          </details>
         )}
 
         {rondes.length > 0 && (

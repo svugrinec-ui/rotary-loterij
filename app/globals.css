@@ -1315,3 +1315,9 @@ table.data th { color: var(--muted); font-size: 13px; text-transform: uppercase;
 .demo-balk-inner { display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: 8px 16px; padding-top: 10px; padding-bottom: 10px; }
 .demo-balk p { margin: 0; flex: 1 1 320px; }
 .demo-balk-knoppen { display: flex; gap: 8px; flex-wrap: wrap; }
+
+/* ---------- Loterijrondes: scrollbaar blok, oudere rondes ingeklapt ---------- */
+.rondes-scroll { max-height: 560px; overflow-y: auto; }
+.rondes-scroll thead th { position: sticky; top: 0; z-index: 1; background: var(--bg, #f6f8fb); }
+.rondes-ouder { margin-top: 12px; }
+.rondes-ouder > summary { cursor: pointer; font-weight: 600; color: var(--rotary-blue); padding: 8px 0; }
