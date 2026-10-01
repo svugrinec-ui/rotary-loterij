@@ -25,11 +25,11 @@ export default async function RondeBeheerPage({
   searchParams,
 }: {
   params: Promise<{ id: string }>;
-  searchParams: Promise<{ avond?: string }>;
+  searchParams: Promise<{ avond?: string; fout?: string }>;
 }) {
   if (!(await isAdmin())) redirect('/beheer');
   const { id } = await params;
-  const { avond } = await searchParams;
+  const { avond, fout } = await searchParams;
   const sb = serviceClient();
 
   const { data: rondeData } = await sb
@@ -100,6 +100,11 @@ export default async function RondeBeheerPage({
       <p style={{ marginTop: 20 }}>
         <Link href="/beheer">← Terug naar beheer</Link>
       </p>
+      {fout === 'hoofdprijs' && (
+        <div className="notice notice-err">
+          Deze ronde heeft nog geen hoofdprijs. Voeg hieronder eerst een experience toe; daarna kun je de ronde openen.
+        </div>
+      )}
 
       <div
         style={{

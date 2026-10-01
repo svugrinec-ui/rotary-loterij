@@ -142,6 +142,12 @@ export async function zetRondeStatus(fd: FormData) {
   const status = str(fd, 'status');
   if (!id || !['open', 'gesloten', 'getrokken'].includes(status)) return;
   const sb = serviceClient();
+  // Een ronde (bv. automatisch aangemaakt vanuit de club-app) kan pas open als
+  // er een hoofdprijs is.
+  if (status === 'open') {
+    const { count } = await sb.from('experiences').select('id', { count: 'exact', head: true }).eq('ronde_id', id);
+    if (!count) redirect(`/beheer/ronde/${id}?fout=hoofdprijs`);
+  }
   await sb.from('rondes').update({ status }).eq('id', id);
 
   // De opbrengst hoort bij de ronde: bij elke statuswijziging de som van de

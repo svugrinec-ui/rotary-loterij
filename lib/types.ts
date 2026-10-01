@@ -9,6 +9,7 @@ export interface Ronde {
   status: RondeStatus;
   lotprijs: number;
   opbrengst: number; // som van de betaalde loten; bijgewerkt bij afvinken/sluiten
+  bijeenkomst_id?: string | null; // gekoppelde clubavond in de club-app
   created_at: string;
 }
 

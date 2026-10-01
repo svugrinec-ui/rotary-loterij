@@ -1,4 +1,5 @@
 import Link from 'next/link';
+import { syncRondes } from '@/lib/syncRondes';
 import { isAdmin } from '@/lib/auth';
 import { serviceClient } from '@/lib/supabase';
 import { euro, maandLabel, datumLabel } from '@/lib/format';
@@ -63,6 +64,9 @@ export default async function BeheerPage({
     );
   }
 
+  // Rondes eerst gelijkzetten met de clubavonden in de club-app.
+  const sync = await syncRondes().catch(() => null);
+
   const sb = serviceClient();
   const [{ data: rondesData }, { data: doelenData }, { data: winnaarsData }] =
     await Promise.all([
@@ -76,6 +80,9 @@ export default async function BeheerPage({
     ]);
 
   const rondes = (rondesData as Ronde[] | null) ?? [];
+  // Welke rondes hebben al een hoofdprijs (experience)?
+  const { data: prijsData } = await sb.from('experiences').select('ronde_id');
+  const metPrijs = new Set(((prijsData ?? []) as { ronde_id: string }[]).map((p) => p.ronde_id));
   const doelen = (doelenData as Doel[] | null) ?? [];
   const winnaars = (winnaarsData as Winnaar[] | null) ?? [];
 
@@ -176,6 +183,23 @@ export default async function BeheerPage({
           <h2>Loterijrondes</h2>
           <span className="sub">Open een ronde, beheer loten en trek winnaars</span>
         </div>
+        {sync && !sync.fout && (
+          <p className="sub" style={{ marginTop: -6 }}>
+            Gelijk met de clubavonden in de club-app
+            {sync.aangemaakt + sync.bijgewerkt + sync.verwijderd > 0 &&
+              ` · zojuist ${[
+                sync.aangemaakt && `${sync.aangemaakt} aangemaakt`,
+                sync.bijgewerkt && `${sync.bijgewerkt} bijgewerkt`,
+                sync.verwijderd && `${sync.verwijderd} verwijderd`,
+              ]
+                .filter(Boolean)
+                .join(', ')}`}
+            .
+          </p>
+        )}
+        {sync?.fout && sync.fout !== 'niet-ingesteld' && (
+          <div className="notice notice-err">Koppeling met de club-app niet bereikbaar ({sync.fout}); rondes zijn niet bijgewerkt.</div>
+        )}
 
         {rondes.length > 0 && (
           <div className="table-wrap">
@@ -202,6 +226,11 @@ export default async function BeheerPage({
                     </td>
                     <td>
                       <Link href={`/beheer/ronde/${r.id}`}>{r.naam}</Link>
+                      {!metPrijs.has(r.id) && r.status !== 'getrokken' && (
+                        <span className="pill pill-flag" title="Voeg een hoofdprijs toe; daarna kan de ronde open">
+                          Hoofdprijs nog invullen
+                        </span>
+                      )}
                     </td>
                     <td>{maandLabel(r.maand)}</td>
                     <td>
