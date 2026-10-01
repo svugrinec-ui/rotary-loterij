@@ -16,16 +16,20 @@ import {
   verwijderRonde,
 } from '@/lib/actions';
 import ConfirmButton from '@/components/ConfirmButton';
+import Aanmeldingen from './Aanmeldingen';
 
 export const dynamic = 'force-dynamic';
 
 export default async function RondeBeheerPage({
   params,
+  searchParams,
 }: {
   params: Promise<{ id: string }>;
+  searchParams: Promise<{ avond?: string }>;
 }) {
   if (!(await isAdmin())) redirect('/beheer');
   const { id } = await params;
+  const { avond } = await searchParams;
   const sb = serviceClient();
 
   const { data: rondeData } = await sb
@@ -210,6 +214,9 @@ export default async function RondeBeheerPage({
           ))
         )}
       </section>
+
+      {/* ---------- Wie komt er, en doet al mee? (koppeling club-app) ---------- */}
+      <Aanmeldingen ronde={ronde} loten={loten} gekozen={avond} />
 
       {/* ---------- Opbrengst deze ronde ---------- */}
       <section>
