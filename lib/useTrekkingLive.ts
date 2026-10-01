@@ -2,6 +2,7 @@
 
 import { useCallback, useEffect, useRef, useState } from 'react';
 import { publicClient } from '@/lib/supabase';
+import { DB_SCHEMA } from '@/lib/demo';
 import { leesMijnLoten, MIJN_LOTEN_EVENT, type MijnLoten } from '@/lib/mijnLoten';
 import { trekkingActief } from '@/lib/trekkingActief';
 import type { TrekkingLive } from '@/lib/types';
@@ -56,7 +57,7 @@ export function useTrekkingLive(
       .channel('trekking-live')
       .on(
         'postgres_changes',
-        { event: '*', schema: 'public', table: 'trekking_live' },
+        { event: '*', schema: DB_SCHEMA, table: 'trekking_live' },
         (bericht) => {
           const nieuw = bericht.new as TrekkingLive | undefined;
           if (!nieuw?.ronde_id) return void laad();

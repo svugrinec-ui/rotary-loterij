@@ -5,6 +5,7 @@ import { IconSettings } from '@/components/Icons';
 import TrekkingLiveOverlay from '@/components/TrekkingLiveOverlay';
 import Meting from '@/components/Meting';
 import { getClubnaam } from '@/lib/instellingen';
+import { isDemo } from '@/lib/demo';
 import './globals.css';
 
 // De clubnaam komt uit de instellingen (beheer), zodat elke club zijn eigen naam heeft.
@@ -31,6 +32,26 @@ export default async function RootLayout({ children }: { children: React.ReactNo
   return (
     <html lang="nl">
       <body>
+        {isDemo && (
+          <div className="demo-balk">
+            <div className="container demo-balk-inner">
+              <p>
+                <strong>Testversie</strong> van de loterij. Probeer gerust alles uit: er wordt niet echt betaald, er gaan
+                geen mails uit en elke nacht wordt alles teruggezet.
+              </p>
+              <div className="demo-balk-knoppen">
+                <Link className="btn btn-sm" href="/beheer">
+                  Loterijbeheer bekijken
+                </Link>
+                {process.env.PLATFORM_URL && (
+                  <a className="btn btn-sm btn-ghost" href={process.env.PLATFORM_URL}>
+                    ← Terug naar de club
+                  </a>
+                )}
+              </div>
+            </div>
+          </div>
+        )}
         <header className="site-header">
           <div className="container header-inner">
             <Link href="/" className="brand" aria-label={`Loterij ${club}`}>

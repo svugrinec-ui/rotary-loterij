@@ -1309,3 +1309,9 @@ table.data th { color: var(--muted); font-size: 13px; text-transform: uppercase;
 @media (max-width: 359px) {
   .site-nav a { padding: 7px 6px; font-size: 13px; }
 }
+
+/* ---------- Demo-balk (alleen in de testversie) ---------- */
+.demo-balk { background: #fff4d6; border-bottom: 1px solid #f0d58a; color: #4a3b10; font-size: 14px; }
+.demo-balk-inner { display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: 8px 16px; padding-top: 10px; padding-bottom: 10px; }
+.demo-balk p { margin: 0; flex: 1 1 320px; }
+.demo-balk-knoppen { display: flex; gap: 8px; flex-wrap: wrap; }

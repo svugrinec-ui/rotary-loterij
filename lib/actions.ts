@@ -5,6 +5,7 @@ import { redirect } from 'next/navigation';
 import { revalidatePath } from 'next/cache';
 import type { SupabaseClient } from '@supabase/supabase-js';
 import { serviceClient } from '@/lib/supabase';
+import { isDemo } from '@/lib/demo';
 import { winnaarFotos } from '@/lib/fotos';
 import { rondeOpbrengst, syncRondeOpbrengst } from '@/lib/ronde-opbrengst';
 import { BUNDELS, type BetaalLinks } from '@/lib/bundels';
@@ -38,7 +39,8 @@ async function uploadFoto(
   prefix: string,
 ): Promise<string | null> {
   const ext = foto.name.split('.').pop()?.toLowerCase() || 'jpg';
-  const pad = `${prefix}/${crypto.randomUUID()}.${ext}`;
+  // De demo bewaart zijn foto's in een eigen map (die de reset leegmaakt).
+  const pad = `${isDemo ? 'loterij-demo/' : ''}${prefix}/${crypto.randomUUID()}.${ext}`;
   const bytes = new Uint8Array(await foto.arrayBuffer());
   const { error } = await sb.storage
     .from('fotos')
@@ -103,6 +105,13 @@ export async function login(fd: FormData) {
   if (!checkPassword(password)) {
     redirect('/beheer?fout=wachtwoord');
   }
+  (await cookies()).set(ADMIN_COOKIE, createSessionToken(), cookieOptions);
+  redirect('/beheer');
+}
+
+/** Demo: met één klik inloggen als loterijbeheerder (alleen in de testversie). */
+export async function demoLogin() {
+  if (!isDemo) redirect('/beheer');
   (await cookies()).set(ADMIN_COOKIE, createSessionToken(), cookieOptions);
   redirect('/beheer');
 }

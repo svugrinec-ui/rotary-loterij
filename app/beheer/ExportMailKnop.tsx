@@ -2,7 +2,7 @@
 
 import { useState } from 'react';
 
-type Status = null | 'bezig' | 'ok' | 'fout' | 'nietingesteld' | 'geenselectie';
+type Status = null | 'bezig' | 'ok' | 'fout' | 'nietingesteld' | 'geenselectie' | 'demo';
 
 // Leest de aangevinkte rondes (checkboxes name="ronde") en biedt twee acties:
 // de CSV downloaden of naar de penningmeester mailen. Beide: niets aangevinkt
@@ -46,7 +46,7 @@ export default function ExportMailKnop() {
         setNaar(data.naar ?? null);
         setStatus('ok');
       } else {
-        setStatus(data.error === 'nietingesteld' ? 'nietingesteld' : 'fout');
+        setStatus(data.error === 'nietingesteld' ? 'nietingesteld' : data.error === 'demo' ? 'demo' : 'fout');
       }
     } catch {
       setStatus('fout');
@@ -79,6 +79,11 @@ export default function ExportMailKnop() {
       {status === 'nietingesteld' && (
         <span className="muted" style={{ fontSize: 13, color: '#b03535' }}>
           E-mail nog niet ingesteld (penningmeester-adres/sleutel ontbreekt).
+        </span>
+      )}
+      {status === 'demo' && (
+        <span className="muted" style={{ fontSize: 13 }}>
+          In de demo worden geen mails verstuurd. Bij je eigen club gaat het overzicht hier naar de penningmeester.
         </span>
       )}
       {status === 'geenselectie' && (

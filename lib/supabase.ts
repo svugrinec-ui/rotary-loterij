@@ -1,4 +1,5 @@
 import { createClient, type SupabaseClient } from '@supabase/supabase-js';
+import { DB_SCHEMA } from './demo';
 
 const url = process.env.NEXT_PUBLIC_SUPABASE_URL;
 const anonKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY;
@@ -11,7 +12,7 @@ export function publicClient(): SupabaseClient {
   if (!url || !anonKey) {
     throw new Error('NEXT_PUBLIC_SUPABASE_URL / NEXT_PUBLIC_SUPABASE_ANON_KEY ontbreken.');
   }
-  return createClient(url, anonKey, { auth: { persistSession: false } });
+  return createClient(url, anonKey, { auth: { persistSession: false }, db: { schema: DB_SCHEMA } }) as unknown as SupabaseClient;
 }
 
 /**
@@ -23,5 +24,5 @@ export function serviceClient(): SupabaseClient {
   if (!url || !serviceKey) {
     throw new Error('NEXT_PUBLIC_SUPABASE_URL / SUPABASE_SERVICE_ROLE_KEY ontbreken.');
   }
-  return createClient(url, serviceKey, { auth: { persistSession: false } });
+  return createClient(url, serviceKey, { auth: { persistSession: false }, db: { schema: DB_SCHEMA } }) as unknown as SupabaseClient;
 }

@@ -1,6 +1,7 @@
 import { NextResponse } from 'next/server';
 import { isAdmin } from '@/lib/auth';
 import { serviceClient } from '@/lib/supabase';
+import { isDemo } from '@/lib/demo';
 import { financieelCsv, exportBestandsnaam } from '@/lib/export';
 import {
   getInstellingen,
@@ -130,6 +131,7 @@ export async function POST(req: Request) {
     return NextResponse.json({ error: 'geentoegang' }, { status: 403 });
   }
 
+  if (isDemo) return NextResponse.json({ error: 'demo' }, { status: 400 });
   const inst = await getInstellingen();
   const apiKey = process.env.RESEND_API_KEY;
   const email = inst?.penningmeester_email || process.env.PENNINGMEESTER_EMAIL || '';

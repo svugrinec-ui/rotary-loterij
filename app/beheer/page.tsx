@@ -2,6 +2,7 @@ import Link from 'next/link';
 import { syncRondes } from '@/lib/syncRondes';
 import { isAdmin } from '@/lib/auth';
 import { serviceClient } from '@/lib/supabase';
+import { isDemo } from '@/lib/demo';
 import { euro, maandLabel, datumLabel } from '@/lib/format';
 import { BUNDELS } from '@/lib/bundels';
 import {
@@ -16,6 +17,7 @@ import WinnaarRondeKeuze from '@/components/WinnaarRondeKeuze';
 import type { Ronde, Doel, Winnaar, TrekkingLive } from '@/lib/types';
 import {
   login,
+  demoLogin,
   logout,
   maakRonde,
   zetRondeStatus,
@@ -48,6 +50,14 @@ export default async function BeheerPage({
         <div className="section-head">
           <h2>Commissie-beheer</h2>
         </div>
+        {isDemo && (
+          <form action={demoLogin} className="notice notice-info" style={{ marginBottom: 16 }}>
+            <p style={{ margin: '0 0 10px' }}>Dit is de testversie: je kunt zonder wachtwoord het beheer bekijken.</p>
+            <button className="btn" type="submit">
+              Inloggen als loterijbeheerder
+            </button>
+          </form>
+        )}
         <form className="panel" action={login}>
           {fout === 'wachtwoord' && (
             <div className="notice notice-err">Onjuist wachtwoord.</div>

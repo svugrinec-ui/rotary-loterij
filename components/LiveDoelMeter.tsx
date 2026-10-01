@@ -2,6 +2,7 @@
 
 import { useCallback, useEffect, useRef, useState } from 'react';
 import { publicClient } from '@/lib/supabase';
+import { DB_SCHEMA } from '@/lib/demo';
 import { euro } from '@/lib/format';
 import DoelMeter from '@/components/DoelMeter';
 import type { Voortgang } from '@/lib/doel';
@@ -59,7 +60,7 @@ export default function LiveDoelMeter({
       .channel('meter-rondes')
       .on(
         'postgres_changes',
-        { event: '*', schema: 'public', table: 'rondes' },
+        { event: '*', schema: DB_SCHEMA, table: 'rondes' },
         () => void laad(),
       )
       .subscribe();
