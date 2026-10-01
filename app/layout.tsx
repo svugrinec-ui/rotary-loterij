@@ -1,5 +1,6 @@
 import type { Metadata, Viewport } from 'next';
 import Link from 'next/link';
+import RotaryLockup from '@/components/RotaryLockup';
 import { IconSettings } from '@/components/Icons';
 import TrekkingLiveOverlay from '@/components/TrekkingLiveOverlay';
 import { getClubnaam } from '@/lib/instellingen';
@@ -31,14 +32,9 @@ export default async function RootLayout({ children }: { children: React.ReactNo
       <body>
         <header className="site-header">
           <div className="container header-inner">
-            <Link href="/" className="brand">
-              {/* eslint-disable-next-line @next/next/no-img-element */}
-              <img className="brand-wheel" src="/RotaryMoE-R_CMYK-C.png" alt="" aria-hidden />
-
-              <span className="brand-text">
-                <strong>Loterij</strong>
-                <small>{club}</small>
-              </span>
+            <Link href="/" className="brand" aria-label={`Loterij ${club}`}>
+              {/* Zelfde Rotary-logo als de club-site, met "Loterij" na de streep. */}
+              <RotaryLockup clubnaam="Loterij" />
             </Link>
             <nav className="site-nav">
               <Link href="/">Winnaars</Link>
