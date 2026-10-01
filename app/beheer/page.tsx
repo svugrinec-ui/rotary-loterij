@@ -19,6 +19,7 @@ import {
   login,
   demoLogin,
   logout,
+  demoTerugzetten,
   maakRonde,
   zetRondeStatus,
   maakDoel,
@@ -149,6 +150,13 @@ export default async function BeheerPage({
       >
         <h1 style={{ margin: 0 }}>Commissie-beheer</h1>
         <div className="row-actions">
+          {isDemo && (
+            <form action={demoTerugzetten}>
+              <button className="btn btn-ghost btn-sm" type="submit">
+                Demo terugzetten
+              </button>
+            </form>
+          )}
           <form action={logout}>
             <button className="btn btn-ghost btn-sm" type="submit">
               Uitloggen

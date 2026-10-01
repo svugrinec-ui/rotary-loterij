@@ -116,6 +116,15 @@ export async function demoLogin() {
   redirect('/beheer');
 }
 
+/** Demo: alles terugzetten naar de voorbeeldinhoud (alleen in de testversie, alleen beheer). */
+export async function demoTerugzetten() {
+  if (!isDemo || !(await isAdmin())) redirect('/beheer');
+  const { zetDemoTerug } = await import('@/lib/demoReset');
+  await zetDemoTerug();
+  revalidatePath('/', 'layout');
+  redirect('/beheer');
+}
+
 export async function logout() {
   (await cookies()).delete(ADMIN_COOKIE);
   redirect('/beheer');
