@@ -1,7 +1,6 @@
 import type { Metadata, Viewport } from 'next';
 import Link from 'next/link';
 import RotaryLockup from '@/components/RotaryLockup';
-import { IconSettings } from '@/components/Icons';
 import TrekkingLiveOverlay from '@/components/TrekkingLiveOverlay';
 import Meting from '@/components/Meting';
 import { getClubnaam } from '@/lib/instellingen';
@@ -62,13 +61,8 @@ export default async function RootLayout({ children }: { children: React.ReactNo
               <Link href="/">Winnaars</Link>
               <Link href="/goede-doelen">Goede doelen</Link>
               <Link href="/meedoen">Meedoen</Link>
-              <Link
-                href="/beheer"
-                className="beheer-link"
-                title="Beheer"
-                aria-label="Beheer"
-              >
-                <IconSettings size={20} />
+              <Link href="/beheer" className="beheer-link">
+                Beheer
               </Link>
             </nav>
           </div>

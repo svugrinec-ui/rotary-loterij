@@ -87,8 +87,14 @@ h3 { font-size: 18px; font-weight: 700; line-height: 1.3; }
   font-size: 15px;
 }
 .site-nav a:hover { background: rgba(255, 255, 255, 0.12); text-decoration: none; }
-.beheer-link { display: inline-flex; align-items: center; justify-content: center; padding: 8px 10px; }
-.beheer-link svg { display: block; }
+.site-nav a.beheer-link {
+  /* Zelfde gele "Beheer"-knop als in de club-app. */
+  background: var(--rotary-gold); color: #3a2600; font-weight: 700; margin-left: 4px;
+}
+.site-nav a.beheer-link:hover { background: var(--rotary-gold); filter: brightness(1.05); }
+/* Knoppen in een tabelrij (Beheer / Open) naast elkaar. */
+.data .row-actions { flex-wrap: nowrap; }
+.data td:last-child { white-space: nowrap; }
 
 /* ---------- Hero ---------- */
 .hero {
@@ -1258,7 +1264,6 @@ table.data th { color: var(--muted); font-size: 13px; text-transform: uppercase;
   }
   .site-nav::-webkit-scrollbar { display: none; }
   .site-nav a { padding: 7px 9px; font-size: 14px; white-space: nowrap; flex-shrink: 0; }
-  .site-nav .beheer-link { padding: 7px 8px; }
   .rotary-lockup-merk { height: 30px; }
   .rotary-lockup-club { font-size: 17px; margin-left: 12px; padding-left: 12px; }
   .hero { padding: 24px 20px; }
