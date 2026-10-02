@@ -1326,3 +1326,12 @@ table.data th { color: var(--muted); font-size: 13px; text-transform: uppercase;
 .rondes-scroll thead th { position: sticky; top: 0; z-index: 1; background: var(--bg, #f6f8fb); }
 .rondes-ouder { margin-top: 12px; }
 .rondes-ouder > summary { cursor: pointer; font-weight: 600; color: var(--rotary-blue); padding: 8px 0; }
+
+/* Snelknoppen bovenaan het beheer: trekking en inschrijf-QR altijd naast elkaar, ook op een telefoon */
+.snelknoppen { display: grid; grid-template-columns: minmax(0, 1.5fr) minmax(0, 1fr); gap: 12px; margin-top: 18px; }
+.snelknoppen .btn { width: 100%; height: 100%; text-align: center; line-height: 1.2; }
+.snelknoppen .btn > svg { flex-shrink: 0; }
+@media (max-width: 480px) {
+  .snelknoppen { gap: 10px; }
+  .snelknoppen .btn-groot { padding: 14px 12px; font-size: 17px; }
+}

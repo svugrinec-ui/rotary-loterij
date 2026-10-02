@@ -171,29 +171,19 @@ export default async function BeheerPage({
       </div>
 
       {/* ---------- Snelknoppen: live trekking + inschrijf-QR ---------- */}
-      <div style={{ display: 'flex', gap: 12, marginTop: 18, flexWrap: 'wrap' }}>
+      <div className="snelknoppen">
         {openRonde ? (
-          <Link
-            className="btn btn-gold btn-groot"
-            href={`/beheer/ronde/${openRonde.id}/trekking`}
-            style={{ display: 'flex', flex: 1, minWidth: 220, justifyContent: 'center' }}
-          >
-            <IconTrophy size={20} /> Start trekking — {openRonde.naam}
+          <Link className="btn btn-gold btn-groot" href={`/beheer/ronde/${openRonde.id}/trekking`}>
+            <IconTrophy size={20} /> <span>Start trekking — {openRonde.naam}</span>
           </Link>
         ) : (
-          <button
-            className="btn btn-gold btn-groot"
-            disabled
-            style={{ display: 'flex', flex: 1, minWidth: 220, justifyContent: 'center' }}
-            title="Open eerst een loterijronde om te trekken"
-          >
-            <IconTrophy size={20} /> Start trekking — geen open ronde
+          <button className="btn btn-gold btn-groot" disabled title="Open eerst een loterijronde om te trekken">
+            <IconTrophy size={20} /> <span>Start trekking — geen open ronde</span>
           </button>
         )}
         <Link
           className="btn btn-groot"
           href="/beheer/qr"
-          style={{ display: 'flex', justifyContent: 'center', whiteSpace: 'nowrap' }}
           title="Toon de QR-code om mee te doen — voor wie de link niet kan vinden"
         >
           Inschrijf-QR
