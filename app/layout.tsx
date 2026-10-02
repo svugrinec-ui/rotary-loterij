@@ -35,8 +35,8 @@ export default async function RootLayout({ children }: { children: React.ReactNo
           <div className="demo-balk">
             <div className="container demo-balk-inner">
               <p>
-                <strong>Testversie</strong> van de loterij. Probeer gerust alles uit: er wordt niet echt betaald, er gaan
-                geen mails uit en elke nacht wordt alles teruggezet.
+                <strong>Testversie</strong> van de loterij. Probeer gerust alles uit: er wordt niet echt betaald en er gaan
+                geen mails uit.
               </p>
               <div className="demo-balk-knoppen">
                 <Link className="btn btn-sm" href="/beheer">

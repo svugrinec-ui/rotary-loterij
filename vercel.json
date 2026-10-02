@@ -7,10 +7,6 @@
     {
       "path": "/api/sync-rondes",
       "schedule": "0 5 * * *"
-    },
-    {
-      "path": "/api/demo-reset",
-      "schedule": "10 2 * * *"
     }
   ]
 }

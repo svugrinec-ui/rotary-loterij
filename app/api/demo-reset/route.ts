@@ -6,7 +6,7 @@ import { zetDemoTerug } from '@/lib/demoReset';
 
 export const maxDuration = 60;
 
-// Elke nacht (Vercel-cron) de testversie terugzetten. Bestaat alleen in de
+// De testversie terugzetten (handmatig; de nachtelijke cron staat uit). Bestaat alleen in de
 // demo; de echte loterij geeft hier 404.
 export async function GET(req: Request) {
   if (!isDemo) return NextResponse.json({ fout: 'Niet gevonden' }, { status: 404 });
