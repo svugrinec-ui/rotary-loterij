@@ -7,6 +7,14 @@
     {
       "path": "/api/sync-rondes",
       "schedule": "0 5 * * *"
+    },
+    {
+      "path": "/api/herinnering-loten",
+      "schedule": "0 16 * * *"
+    },
+    {
+      "path": "/api/herinnering-loten",
+      "schedule": "0 17 * * *"
     }
   ]
 }

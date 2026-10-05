@@ -3,6 +3,7 @@ import Link from 'next/link';
 import RotaryLockup from '@/components/RotaryLockup';
 import TrekkingLiveOverlay from '@/components/TrekkingLiveOverlay';
 import Meting from '@/components/Meting';
+import { MeldingenGelezen } from '@/components/LoterijMeldingen';
 import { getClubnaam } from '@/lib/instellingen';
 import { isDemo } from '@/lib/demo';
 import './globals.css';
@@ -73,6 +74,7 @@ export default async function RootLayout({ children }: { children: React.ReactNo
             bezoeker ook zit. Staat uit op /beheer en /live. */}
         <TrekkingLiveOverlay />
         <Meting platformUrl={process.env.PLATFORM_URL ?? null} />
+        <MeldingenGelezen />
         <footer className="site-footer">
           <div className="container">
             <p>{club} · Loterijcommissie</p>

@@ -141,3 +141,26 @@ end $$;
 
 -- Opslag: de bucket 'fotos' bestaat al in de platformdatabase; de demo
 -- gebruikt daarin de map 'loterij-demo/'.
+
+-- Pushmeldingen (zie migratie-push.sql); alleen de server leest en schrijft.
+create table if not exists loterij_demo.push_abonnementen (
+  id            uuid primary key default gen_random_uuid(),
+  endpoint      text not null unique,
+  p256dh        text not null,
+  auth          text not null,
+  naam          text,
+  email         text,
+  actief        boolean not null default true,
+  created_at    timestamptz not null default now(),
+  bijgewerkt_op timestamptz not null default now()
+);
+create table if not exists loterij_demo.push_meldingen (
+  ronde_id     uuid not null references loterij_demo.rondes(id) on delete cascade,
+  soort        text not null check (soort in ('loten', 'trekking')),
+  verstuurd_op timestamptz not null default now(),
+  aantal       int not null default 0,
+  primary key (ronde_id, soort)
+);
+grant all on loterij_demo.push_abonnementen, loterij_demo.push_meldingen to service_role;
+alter table loterij_demo.push_abonnementen enable row level security;
+alter table loterij_demo.push_meldingen    enable row level security;

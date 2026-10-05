@@ -7,6 +7,7 @@ import { IconTrophy } from '@/components/Icons';
 import FotoKiezer from '@/components/FotoKiezer';
 import CijferNummer from '@/components/CijferNummer';
 import { CIJFER_MS } from '@/lib/cijferReveal';
+import TrekkingAankondigen from './TrekkingAankondigen';
 
 interface Lot {
   lotnummer: number;
@@ -250,6 +251,8 @@ export default function TrekkingShow({
           <Link href={`/beheer/ronde/${rondeId}`}>← Terug naar ronde</Link>
         </p>
         <h1>Trekking — {rondeNaam}</h1>
+
+        <TrekkingAankondigen rondeId={rondeId} />
 
         {experiences.length === 0 ? (
           <div className="notice notice-err">
