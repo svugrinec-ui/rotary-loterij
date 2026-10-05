@@ -1352,9 +1352,6 @@ html.ingebed .site-header .site-nav a { font-weight: 700; }
 html.ingebed .site-header .site-nav a { color: #3a2600; }
 html.ingebed .site-header .site-nav a:hover { background: rgba(58, 38, 0, 0.1); }
 
-/* Beheer: herinnering op de loterijavond, onder de snelknoppen */
-.vanavond-blok { display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: 10px 16px; margin: 12px 0 0; }
-.vanavond-blok .trekking-aankondigen { margin: 0; }
 
 /* Teksten alleen voor de losse site of alleen in de club-app */
 .alleen-app { display: none; }
@@ -1365,3 +1362,10 @@ html.ingebed .alleen-los { display: none !important; }
 .betaal-ingeklapt { text-align: center; margin-top: 20px; padding: 16px 18px; }
 .betaal-ingeklapt p { margin: 6px 0 8px; }
 .betaal-ingeklapt .knop-link { font-size: 14px; }
+
+/* Beheeroverzicht: aangemeld, nog geen lot */
+.aanmeld-blok { margin: 12px 0 0; }
+.aanmeld-kop { display: flex; justify-content: space-between; align-items: baseline; gap: 10px; flex-wrap: wrap; }
+.aanmeld-kop .sub { text-transform: capitalize; }
+.aanmeld-namen { list-style: none; display: flex; flex-wrap: wrap; gap: 6px; margin: 10px 0 0; padding: 0; }
+.aanmeld-namen li { background: #fdf0d6; color: #6b4500; border-radius: 999px; padding: 4px 10px; font-size: 14px; font-weight: 600; }
