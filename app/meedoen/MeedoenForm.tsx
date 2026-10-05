@@ -50,6 +50,9 @@ export default function MeedoenForm({ rondeId, betaalLinks }: Props) {
   // na de trekking)? Dan is het lotenmoment al geweest en staat de betaalstap
   // vooraan in de stappenbalk.
   const [hersteld, setHersteld] = useState(false);
+  // In de club-app: alles al betaald (volgens de penningmeester)? Dan geen betaalstap.
+  const [alBetaald, setAlBetaald] = useState(false);
+  const [inApp, setInApp] = useState(false);
   // Is de betaalstap gezet (contant gekozen of op de bankknop getikt)? Dan
   // licht stap 3 op in de stappenbalk.
   const [betaalStap, setBetaalStap] = useState(false);
@@ -61,11 +64,43 @@ export default function MeedoenForm({ rondeId, betaalLinks }: Props) {
   const [betaalInBeeld, setBetaalInBeeld] = useState(false);
   const betaalBlok = useRef<HTMLDivElement | null>(null);
 
-  // Vanuit de club-app: je naam staat al klaar (zolang je nog niets typte).
+  // Vanuit de club-app: je naam staat al klaar (zolang je nog niets typte), en
+  // je loten komen uit de loterij zelf — niet uit het geheugen van dit toestel.
+  // Zo zie je na een herstart of op een ander toestel gewoon dat je meedoet.
   useEffect(() => {
+    let gehaald = false;
     const vul = () => {
       const lid = leesClubLid();
-      if (lid) setNaam((huidig) => huidig || lid.naam);
+      if (!lid) return;
+      setInApp(true);
+      setNaam((huidig) => huidig || lid.naam);
+      if (gehaald) return;
+      gehaald = true;
+      fetch('/api/loten/opzoeken', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ naam: lid.naam, email: lid.email }),
+      })
+        .then((r) => (r.ok ? r.json() : null))
+        .then((d: { ronde_id?: string; nummers?: number[]; totaal?: number; openstaand?: number } | null) => {
+          if (!d || (d.ronde_id && d.ronde_id !== rondeId)) return;
+          if (!d.nummers?.length) {
+            // Geen loten op jouw naam. Staan er op dit toestel nog loten van iemand anders
+            // (bv. eerder ingelogd als een ander lid)? Die horen niet bij jou: weg ermee.
+            const opToestel = leesMijnLoten(rondeId);
+            if (opToestel && !zelfdeNaam(opToestel.naam, lid.naam)) {
+              vergeetMijnLoten();
+              opnieuw(true);
+            }
+            return;
+          }
+          const open = d.openstaand ?? 0;
+          setResultaat({ nummers: d.nummers, naam: lid.naam, bedrag: open > 0 ? open : d.totaal ?? 0 });
+          setHersteld(true);
+          setAlBetaald(open === 0);
+          bewaarMijnLoten(rondeId, lid.naam, d.nummers, open > 0 ? open : d.totaal);
+        })
+        .catch(() => {});
     };
     vul();
     window.addEventListener(CLUB_LID_EVENT, vul);
@@ -296,7 +331,9 @@ export default function MeedoenForm({ rondeId, betaalLinks }: Props) {
     opnieuw();
   }
 
-  function opnieuw() {
+  /** Terug naar stap 1. Met eigenNaam (club-app, "Meer loten kopen") staat je eigen naam al klaar. */
+  function opnieuw(eigenNaam = false) {
+    setAlBetaald(false);
     setBetaalStap(false);
     setBetaalInBeeld(false);
     setTerugVanBank(false);
@@ -304,7 +341,7 @@ export default function MeedoenForm({ rondeId, betaalLinks }: Props) {
     setResultaat(null);
     setBekend(null);
     setGetoond(false);
-    setNaam('');
+    setNaam(eigenNaam ? leesClubLid()?.naam ?? '' : '');
     setBedrag(BUNDELS[0]?.bedrag ?? 5);
     setBetaalwijze('bank');
     setEigenModus(false);
@@ -343,6 +380,11 @@ export default function MeedoenForm({ rondeId, betaalLinks }: Props) {
             : 'Bij de trekking hoef je niets te doen: die verschijnt vanzelf op dit scherm, met jouw nummers erbij.'}
         </p>
 
+        {alBetaald ? (
+          <div className="notice notice-ok" style={{ marginTop: 20, textAlign: 'center' }}>
+            <strong>✓ Betaald</strong> — je doet mee. Nu is het wachten op de trekking.
+          </div>
+        ) : (
         <div
           className="panel"
           style={{ textAlign: 'center', marginTop: 28 }}
@@ -441,6 +483,7 @@ export default function MeedoenForm({ rondeId, betaalLinks }: Props) {
             </>
           )}
         </div>
+        )}
 
         <p
           className="muted alleen-los"
@@ -451,10 +494,20 @@ export default function MeedoenForm({ rondeId, betaalLinks }: Props) {
         </p>
 
         <div style={{ textAlign: 'center', marginTop: 12 }}>
-          <button className="btn btn-gold" onClick={opnieuw}>
-            <span className="alleen-los">Nog iemand inschrijven</span>
-            <span className="alleen-app">Loten voor iemand anders</span>
-          </button>
+          {inApp ? (
+            <div className="row-actions" style={{ justifyContent: 'center' }}>
+              <button className="btn btn-gold" onClick={() => opnieuw(true)}>
+                Meer loten kopen
+              </button>
+              <button className="btn btn-ghost" onClick={() => opnieuw()}>
+                Loten voor iemand anders
+              </button>
+            </div>
+          ) : (
+            <button className="btn btn-gold" onClick={() => opnieuw()}>
+              Nog iemand inschrijven
+            </button>
+          )}
         </div>
 
         {hersteld && (
@@ -484,9 +537,8 @@ export default function MeedoenForm({ rondeId, betaalLinks }: Props) {
           <small>Je doet mee met de trekking — bij het trekken roepen we ook de naam om.</small>
         </div>
         <div style={{ textAlign: 'center', marginTop: 8 }}>
-          <button className="btn btn-gold" onClick={opnieuw}>
-            <span className="alleen-los">Nog iemand inschrijven</span>
-            <span className="alleen-app">Loten voor iemand anders</span>
+          <button className="btn btn-gold" onClick={() => opnieuw()}>
+            {inApp ? 'Loten voor iemand anders' : 'Nog iemand inschrijven'}
           </button>
         </div>
       </>

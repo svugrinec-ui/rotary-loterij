@@ -1,13 +1,13 @@
 'use client';
 
 import { useEffect, useState } from 'react';
-import { bewaarMijnLoten, leesMijnLoten, MIJN_LOTEN_EVENT } from '@/lib/mijnLoten';
+import { bewaarMijnLoten } from '@/lib/mijnLoten';
 import { CLUB_LID_EVENT, leesClubLid, type ClubLid } from '@/lib/clubLid';
 import MijnLotenRij, { lotenTitel } from '@/components/MijnLotenRij';
 
 /**
- * Lotnummers terugvinden. In de club-app weten we wie je bent: dan staan je
- * loten vanzelf in beeld (geen zoeken). Op de losse site zoek je op naam.
+ * Lotnummers terugvinden op naam. Alleen op de losse site: in de club-app weten
+ * we wie je bent en toont het formulier erboven je loten al.
  */
 export default function LotenOpzoeken() {
   const [lid, setLid] = useState<ClubLid | null>(null);
@@ -17,56 +17,7 @@ export default function LotenOpzoeken() {
     window.addEventListener(CLUB_LID_EVENT, lees);
     return () => window.removeEventListener(CLUB_LID_EVENT, lees);
   }, []);
-  return lid ? <JouwLoten lid={lid} /> : <ZoekOpNaam />;
-}
-
-/** Ingelogd via de club-app: je loten in de lopende ronde, zonder zoeken. */
-function JouwLoten({ lid }: { lid: ClubLid }) {
-  const [nummers, setNummers] = useState<number[]>([]);
-  useEffect(() => {
-    let actief = true;
-    // Zelf opgeslagen? Dan niet opnieuw reageren op ons eigen 'gewijzigd'-signaal.
-    let eigenOpslag = false;
-    const haal = () =>
-      fetch('/api/loten/opzoeken', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ naam: lid.naam, email: lid.email }),
-      })
-        .then((r) => (r.ok ? r.json() : null))
-        .then((data: { ronde_id?: string; nummers?: number[] } | null) => {
-          if (!actief || !data) return;
-          const gevonden = data.nummers ?? [];
-          // Staan ze al op dit toestel, dan toont het formulier erboven ze al: niet dubbel.
-          const bekend = data.ronde_id ? leesMijnLoten(data.ronde_id)?.nummers ?? [] : [];
-          const nieuw = gevonden.some((n) => !bekend.includes(n));
-          setNummers(nieuw ? gevonden : []);
-          // Onthouden op dit toestel: dan licht de live-trekking ze uit.
-          if (data.ronde_id && nieuw) {
-            eigenOpslag = true;
-            bewaarMijnLoten(data.ronde_id, lid.naam, gevonden);
-            eigenOpslag = false;
-          }
-        })
-        .catch(() => {});
-    haal();
-    // Net loten gekocht? Dan opnieuw ophalen.
-    const opnieuw = () => {
-      if (!eigenOpslag) setTimeout(haal, 800);
-    };
-    window.addEventListener(MIJN_LOTEN_EVENT, opnieuw);
-    return () => {
-      actief = false;
-      window.removeEventListener(MIJN_LOTEN_EVENT, opnieuw);
-    };
-  }, [lid.naam, lid.email]);
-
-  if (nummers.length === 0) return null;
-  return (
-    <div className="lot-badge" style={{ marginTop: 14 }}>
-      <MijnLotenRij nummers={nummers} titel={lotenTitel(nummers.length, lid.naam)} donker groot />
-    </div>
-  );
+  return lid ? null : <ZoekOpNaam />;
 }
 
 /** Losse site (niet ingelogd): zoeken op naam. */

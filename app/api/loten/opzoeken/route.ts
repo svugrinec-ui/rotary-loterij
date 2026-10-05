@@ -42,21 +42,28 @@ export async function POST(req: Request) {
   const [{ data: opNaam }, { data: opEmail }] = await Promise.all([
     sb
       .from('loten')
-      .select('lotnummer')
+      .select('lotnummer, betaald, bedrag')
       .eq('ronde_id', ronde.id)
       .ilike('naam', naam), // hoofdletter-ongevoelig, exacte naam (geen wildcards)
     // Vanuit de club-app: ook loten met het e-mailadres van het lid als contact.
     /^[^\s@,()]+@[^\s@,()]+$/.test(email)
-      ? sb.from('loten').select('lotnummer').eq('ronde_id', ronde.id).ilike('contact', email)
-      : Promise.resolve({ data: [] as { lotnummer: number }[] }),
+      ? sb.from('loten').select('lotnummer, betaald, bedrag').eq('ronde_id', ronde.id).ilike('contact', email)
+      : Promise.resolve({ data: [] as { lotnummer: number; betaald: boolean; bedrag: number }[] }),
   ]);
-  const nummers = [...new Set([...(opNaam ?? []), ...(opEmail ?? [])].map((l) => l.lotnummer as number))].sort(
-    (a, b) => a - b,
-  );
+  // Per lotnummer één keer (een lot kan zowel op naam als op e-mail gevonden zijn).
+  const perNummer = new Map<number, { betaald: boolean; bedrag: number }>();
+  for (const l of [...(opNaam ?? []), ...(opEmail ?? [])] as { lotnummer: number; betaald: boolean; bedrag: number }[]) {
+    perNummer.set(l.lotnummer, { betaald: !!l.betaald, bedrag: Number(l.bedrag ?? 0) });
+  }
+  const nummers = [...perNummer.keys()].sort((a, b) => a - b);
+  const som = (alleenOpen: boolean) =>
+    Math.round([...perNummer.values()].filter((l) => !alleenOpen || !l.betaald).reduce((s, l) => s + l.bedrag, 0) * 100) / 100;
 
   return NextResponse.json({
     ronde: ronde.naam,
     ronde_id: ronde.id,
     nummers,
+    totaal: som(false), // wat deze loten samen kosten
+    openstaand: som(true), // nog niet afgevinkt door de penningmeester
   });
 }

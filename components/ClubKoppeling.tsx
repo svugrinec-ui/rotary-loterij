@@ -1,7 +1,8 @@
 'use client';
 
 import { useEffect } from 'react';
-import { bewaarClubLid } from '@/lib/clubLid';
+import { bewaarClubLid, zelfdeNaam } from '@/lib/clubLid';
+import { leesMijnLoten, vergeetMijnLoten } from '@/lib/mijnLoten';
 
 /**
  * Ingebed in de club-app: luistert naar het lid dat de club-app doorgeeft.
@@ -15,6 +16,9 @@ export default function ClubKoppeling({ platformUrl }: { platformUrl: string | n
       if (e.origin !== toegestaan) return;
       const d = e.data as { type?: string; naam?: string; email?: string } | null;
       if (d?.type !== 'rotary-lid' || typeof d.naam !== 'string') return;
+      // Loten van een ander lid op dit toestel (bv. eerder anders ingelogd) horen niet bij dit lid.
+      const opToestel = leesMijnLoten();
+      if (opToestel && !zelfdeNaam(opToestel.naam, d.naam)) vergeetMijnLoten();
       bewaarClubLid({ naam: d.naam.slice(0, 120), email: String(d.email ?? '').slice(0, 200) });
     };
     window.addEventListener('message', ontvang);
