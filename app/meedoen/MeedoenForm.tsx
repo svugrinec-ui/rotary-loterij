@@ -337,7 +337,7 @@ export default function MeedoenForm({ rondeId, betaalLinks }: Props) {
           </small>
         </div>
 
-        <p className="muted" style={{ textAlign: 'center', marginTop: 12, marginBottom: 0 }}>
+        <p className="muted alleen-los" style={{ textAlign: 'center', marginTop: 12, marginBottom: 0 }}>
           {hersteld
             ? 'Je loten staan klaar. Bij de trekking hoef je niets te doen: die verschijnt vanzelf op dit scherm, met jouw nummers erbij.'
             : 'Bij de trekking hoef je niets te doen: die verschijnt vanzelf op dit scherm, met jouw nummers erbij.'}
@@ -443,7 +443,7 @@ export default function MeedoenForm({ rondeId, betaalLinks }: Props) {
         </div>
 
         <p
-          className="muted"
+          className="muted alleen-los"
           style={{ textAlign: 'center', fontSize: 14, marginTop: 14, marginBottom: 0 }}
         >
           Na het betalen kom je hier gewoon terug. Nummers kwijt? Zoek ze onderaan
@@ -452,12 +452,13 @@ export default function MeedoenForm({ rondeId, betaalLinks }: Props) {
 
         <div style={{ textAlign: 'center', marginTop: 12 }}>
           <button className="btn btn-gold" onClick={opnieuw}>
-            Nog iemand inschrijven
+            <span className="alleen-los">Nog iemand inschrijven</span>
+            <span className="alleen-app">Loten voor iemand anders</span>
           </button>
         </div>
 
         {hersteld && (
-          <div style={{ textAlign: 'center', marginTop: 12 }}>
+          <div className="alleen-los" style={{ textAlign: 'center', marginTop: 12 }}>
             <button className="knop-link" onClick={wisVanToestel}>
               Niet jouw loten? Van dit toestel wissen
             </button>
@@ -484,7 +485,8 @@ export default function MeedoenForm({ rondeId, betaalLinks }: Props) {
         </div>
         <div style={{ textAlign: 'center', marginTop: 8 }}>
           <button className="btn btn-gold" onClick={opnieuw}>
-            Nog iemand inschrijven
+            <span className="alleen-los">Nog iemand inschrijven</span>
+            <span className="alleen-app">Loten voor iemand anders</span>
           </button>
         </div>
       </>

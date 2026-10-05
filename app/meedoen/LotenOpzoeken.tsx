@@ -25,6 +25,8 @@ function JouwLoten({ lid }: { lid: ClubLid }) {
   const [nummers, setNummers] = useState<number[]>([]);
   useEffect(() => {
     let actief = true;
+    // Zelf opgeslagen? Dan niet opnieuw reageren op ons eigen 'gewijzigd'-signaal.
+    let eigenOpslag = false;
     const haal = () =>
       fetch('/api/loten/opzoeken', {
         method: 'POST',
@@ -35,16 +37,23 @@ function JouwLoten({ lid }: { lid: ClubLid }) {
         .then((data: { ronde_id?: string; nummers?: number[] } | null) => {
           if (!actief || !data) return;
           const gevonden = data.nummers ?? [];
-          setNummers(gevonden);
-          // Onthouden op dit toestel: dan licht de live-trekking ze uit.
-          // Alleen als er iets nieuws is (opslaan seint zelf ook 'gewijzigd': anders een lus).
+          // Staan ze al op dit toestel, dan toont het formulier erboven ze al: niet dubbel.
           const bekend = data.ronde_id ? leesMijnLoten(data.ronde_id)?.nummers ?? [] : [];
-          if (data.ronde_id && gevonden.some((n) => !bekend.includes(n))) bewaarMijnLoten(data.ronde_id, lid.naam, gevonden);
+          const nieuw = gevonden.some((n) => !bekend.includes(n));
+          setNummers(nieuw ? gevonden : []);
+          // Onthouden op dit toestel: dan licht de live-trekking ze uit.
+          if (data.ronde_id && nieuw) {
+            eigenOpslag = true;
+            bewaarMijnLoten(data.ronde_id, lid.naam, gevonden);
+            eigenOpslag = false;
+          }
         })
         .catch(() => {});
     haal();
     // Net loten gekocht? Dan opnieuw ophalen.
-    const opnieuw = () => setTimeout(haal, 800);
+    const opnieuw = () => {
+      if (!eigenOpslag) setTimeout(haal, 800);
+    };
     window.addEventListener(MIJN_LOTEN_EVENT, opnieuw);
     return () => {
       actief = false;

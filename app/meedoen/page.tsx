@@ -110,7 +110,7 @@ export default async function MeedoenPage() {
         <MeedoenForm rondeId={ronde.id} betaalLinks={betaalLinks} />
         <LotenOpzoeken />
 
-        <p className="muted" style={{ textAlign: 'center', marginTop: 18 }}>
+        <p className="muted alleen-los" style={{ textAlign: 'center', marginTop: 18 }}>
           Trekkingsavond? Zodra de commissie begint, verschijnt de trekking hier
           op deze pagina — met jouw lotnummers erbij. Je hoeft niets te doen.
         </p>
