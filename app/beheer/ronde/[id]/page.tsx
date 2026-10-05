@@ -17,6 +17,7 @@ import {
 } from '@/lib/actions';
 import ConfirmButton from '@/components/ConfirmButton';
 import Aanmeldingen from './Aanmeldingen';
+import BeheerLive from '@/components/BeheerLive';
 
 export const dynamic = 'force-dynamic';
 
@@ -222,6 +223,7 @@ export default async function RondeBeheerPage({
 
       {/* ---------- Wie komt er, en doet al mee? (koppeling club-app) ---------- */}
       <Aanmeldingen ronde={ronde} loten={loten} gekozen={avond} />
+      <BeheerLive rondeIds={[ronde.id]} />
 
       {/* ---------- Opbrengst deze ronde ---------- */}
       <section>

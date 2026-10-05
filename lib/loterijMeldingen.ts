@@ -2,6 +2,7 @@ import { serviceClient } from './supabase';
 import { haalAvonden, vergelijk, type Avond } from './aanmeldingen';
 import { actieveAbonnementen, norm, stuurPush, type Abonnement } from './push';
 import { meldViaClubApp, type Bereikt } from './platformMelding';
+import { logMelding } from './meldingLog';
 
 /** Al bereikt via de club-app? Dan niet nog eens via de loterij-app. */
 const nietAlBereikt = (bereikt: Bereikt[]) => {
@@ -66,6 +67,7 @@ export async function lotenHerinnering(nu = new Date()): Promise<{ verstuurd: nu
     if (!(await claim(ronde.id, 'loten'))) continue;
     const { zonderLot, aantal } = await herinnerZonderLot(ronde.id, avond, abos);
     await sb.from('push_meldingen').update({ aantal }).eq('ronde_id', ronde.id).eq('soort', 'loten');
+    await logMelding(ronde.id, 'loten', false, aantal);
     uit.verstuurd += aantal;
     uit.meldingen.push(`${avond.titel}: ${zonderLot} zonder lot, ${aantal} melding(en)`);
   }
@@ -128,6 +130,7 @@ export async function trekkingMelding(
   await sb
     .from('push_meldingen')
     .upsert({ ronde_id: rondeId, soort: 'trekking', aantal: bereikt.length + viaLoterij, verstuurd_op: new Date().toISOString() });
+  await logMelding(rondeId, 'trekking', true, bereikt.length + viaLoterij);
   return {
     aantal: bereikt.length + viaLoterij,
     deelnemers: new Set(lijst.map((l) => norm(l.naam))).size,

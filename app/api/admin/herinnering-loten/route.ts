@@ -4,6 +4,7 @@ import { pushIngesteld } from '@/lib/push';
 import { serviceClient } from '@/lib/supabase';
 import { haalAvonden } from '@/lib/aanmeldingen';
 import { herinnerZonderLot } from '@/lib/loterijMeldingen';
+import { logMelding } from '@/lib/meldingLog';
 
 export const runtime = 'nodejs';
 
@@ -27,7 +28,9 @@ export async function POST(req: Request) {
   const avond = avonden.find((a) => a.id === body.avond_id);
   if (!avond) return NextResponse.json({ fout: 'Clubavond niet gevonden.' }, { status: 404 });
   try {
-    return NextResponse.json(await herinnerZonderLot(ronde.id as string, avond));
+    const uitkomst = await herinnerZonderLot(ronde.id as string, avond);
+    await logMelding(ronde.id as string, 'loten', true, uitkomst.aantal);
+    return NextResponse.json(uitkomst);
   } catch (e) {
     console.error('Herinnering mislukt:', (e as Error).message);
     return NextResponse.json({ fout: 'Versturen is niet gelukt.' }, { status: 500 });

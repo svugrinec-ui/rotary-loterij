@@ -164,3 +164,16 @@ create table if not exists loterij_demo.push_meldingen (
 grant all on loterij_demo.push_abonnementen, loterij_demo.push_meldingen to service_role;
 alter table loterij_demo.push_abonnementen enable row level security;
 alter table loterij_demo.push_meldingen    enable row level security;
+
+-- Logboek van verstuurde loterijmeldingen (zie migratie-meldingen-log.sql).
+create table if not exists loterij_demo.meldingen_log (
+  id           uuid primary key default gen_random_uuid(),
+  ronde_id     uuid not null references loterij_demo.rondes(id) on delete cascade,
+  soort        text not null,
+  handmatig    boolean not null default false,
+  aantal       int not null default 0,
+  verstuurd_op timestamptz not null default now()
+);
+create index if not exists meldingen_log_ronde_idx on loterij_demo.meldingen_log (ronde_id, verstuurd_op);
+grant all on loterij_demo.meldingen_log to service_role;
+alter table loterij_demo.meldingen_log enable row level security;

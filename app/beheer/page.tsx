@@ -12,6 +12,10 @@ import {
 } from '@/lib/instellingen';
 import { IconTrophy } from '@/components/Icons';
 import ExportMailKnop from './ExportMailKnop';
+import HerinneringKnop from './ronde/[id]/HerinneringKnop';
+import BeheerLive from '@/components/BeheerLive';
+import { haalAvonden, vergelijk } from '@/lib/aanmeldingen';
+import { leesLog, logTekst } from '@/lib/meldingLog';
 import FotoKiezer from '@/components/FotoKiezer';
 import WinnaarRondeKeuze from '@/components/WinnaarRondeKeuze';
 import type { Ronde, Doel, Winnaar, TrekkingLive } from '@/lib/types';
@@ -143,6 +147,27 @@ export default async function BeheerPage({
   // Snelknop trekking hoort bij een lopende (open) loterijronde.
   const openRonde = rondes.find((r) => r.status === 'open') ?? null;
 
+  // Loterijavond vandaag? Dan de herinnering voor wie nog geen lot heeft bij de hand.
+  let vanavond: { avondId: string; aantal: number; log: string | null } | null = null;
+  if (openRonde?.bijeenkomst_id) {
+    const dagVan = (iso: string) => new Date(iso).toLocaleDateString('sv-SE', { timeZone: 'Europe/Amsterdam' });
+    const vandaag = dagVan(new Date().toISOString());
+    const { avonden } = await haalAvonden(vandaag.slice(0, 7));
+    const avond = avonden.find((a) => a.id === openRonde.bijeenkomst_id && dagVan(a.begin_op) === vandaag);
+    if (avond) {
+      const [{ data: lotenData }, log] = await Promise.all([
+        sb.from('loten').select('naam, contact').eq('ronde_id', openRonde.id),
+        leesLog(openRonde.id, 'loten'),
+      ]);
+      const uitslag = vergelijk(avond.leden, (lotenData ?? []) as { naam: string; contact: string | null }[]);
+      vanavond = {
+        avondId: avond.id,
+        aantal: uitslag.filter((u) => u.status === 'geen-lot').length,
+        log: logTekst(log),
+      };
+    }
+  }
+
   return (
     <>
       <div
@@ -189,6 +214,15 @@ export default async function BeheerPage({
           Inschrijf-QR
         </Link>
       </div>
+      {openRonde && vanavond && (
+        <div className="panel vanavond-blok">
+          <HerinneringKnop rondeId={openRonde.id} avondId={vanavond.avondId} aantal={vanavond.aantal} log={vanavond.log} groot />
+          <Link href={`/beheer/ronde/${openRonde.id}#aanmeldingen`} className="sub">
+            Wie zijn dat? →
+          </Link>
+        </div>
+      )}
+      <BeheerLive rondeIds={openRonde ? [openRonde.id] : []} />
 
       {/* ---------- Rondes ---------- */}
       <section>

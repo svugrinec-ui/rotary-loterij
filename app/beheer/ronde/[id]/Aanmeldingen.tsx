@@ -2,6 +2,7 @@ import Link from 'next/link';
 import { haalAvonden, vergelijk } from '@/lib/aanmeldingen';
 import type { Lot, Ronde } from '@/lib/types';
 import HerinneringKnop from './HerinneringKnop';
+import { leesLog, logTekst } from '@/lib/meldingLog';
 
 const datum = (iso: string) =>
   new Intl.DateTimeFormat('nl-NL', { weekday: 'short', day: 'numeric', month: 'short', timeZone: 'Europe/Amsterdam' }).format(new Date(iso));
@@ -46,6 +47,7 @@ export default async function Aanmeldingen({
   const geenLot = uitslag.filter((u) => u.status === 'geen-lot');
   const twijfel = uitslag.filter((u) => u.status === 'controleren');
   const mee = uitslag.filter((u) => u.status === 'meedoen');
+  const log = logTekst(await leesLog(ronde.id, 'loten'));
 
   return (
     <section>
@@ -87,7 +89,7 @@ export default async function Aanmeldingen({
               {/* Alleen bij de avond van déze ronde, en alleen als je nog loten kunt kopen. */}
               {geenLot.length > 0 && avond.id === ronde.bijeenkomst_id && ronde.status === 'open' && (
                 <div style={{ margin: '-6px 0 14px' }}>
-                  <HerinneringKnop rondeId={ronde.id} avondId={avond.id} />
+                  <HerinneringKnop rondeId={ronde.id} avondId={avond.id} aantal={geenLot.length} log={log} />
                 </div>
               )}
               {twijfel.length > 0 && (

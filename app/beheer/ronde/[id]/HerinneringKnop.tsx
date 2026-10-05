@@ -1,6 +1,7 @@
 'use client';
 
 import { useState } from 'react';
+import { useRouter } from 'next/navigation';
 
 function uitkomstTekst(d: { aantal?: number; viaClub?: number; viaLoterij?: number }, leeg: string): string {
   if (!d.aantal) return leeg;
@@ -13,7 +14,20 @@ function uitkomstTekst(d: { aantal?: number; viaClub?: number; viaLoterij?: numb
 
 
 /** Nu een melding sturen aan wie zich heeft aangemeld maar nog geen lot heeft. */
-export default function HerinneringKnop({ rondeId, avondId }: { rondeId: string; avondId: string }) {
+export default function HerinneringKnop({
+  rondeId,
+  avondId,
+  aantal,
+  log,
+  groot = false,
+}: {
+  rondeId: string;
+  avondId: string;
+  aantal?: number;
+  log?: string | null;
+  groot?: boolean;
+}) {
+  const router = useRouter();
   const [bezig, setBezig] = useState(false);
   const [uitkomst, setUitkomst] = useState<string | null>(null);
 
@@ -29,6 +43,7 @@ export default function HerinneringKnop({ rondeId, avondId }: { rondeId: string;
       const data = (await res.json().catch(() => ({}))) as { aantal?: number; viaClub?: number; viaLoterij?: number; fout?: string };
       if (!res.ok) throw new Error(data.fout ?? 'Versturen is niet gelukt.');
       setUitkomst(uitkomstTekst(data, 'Niemand van hen heeft meldingen aan.'));
+      router.refresh();
     } catch (e) {
       setUitkomst(e instanceof Error ? e.message : 'Versturen is niet gelukt.');
     } finally {
@@ -37,11 +52,13 @@ export default function HerinneringKnop({ rondeId, avondId }: { rondeId: string;
   }
 
   return (
-    <div className="trekking-aankondigen" style={{ margin: '8px 0 0' }}>
-      <button className="btn btn-sm" type="button" onClick={stuur} disabled={bezig}>
-        {bezig ? 'Versturen…' : '🔔 Herinnering sturen'}
+    <div className="trekking-aankondigen" style={{ margin: groot ? 0 : '8px 0 0' }}>
+      <button className={`btn${groot ? '' : ' btn-sm'}`} type="button" onClick={stuur} disabled={bezig || aantal === 0}>
+        {bezig ? 'Versturen…' : `🔔 Herinner wie nog geen lot heeft${aantal != null ? ` (${aantal})` : ''}`}
       </button>
-      <p>{uitkomst ?? 'Om 18:00 op de avond gaat deze melding ook vanzelf.'}</p>
+      <p>
+        {uitkomst ?? (log ? `Verstuurd: ${log}` : 'Om 18:00 op de avond gaat deze melding ook vanzelf.')}
+      </p>
     </div>
   );
 }

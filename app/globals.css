@@ -1351,3 +1351,7 @@ html.ingebed .header-inner { min-height: 46px; }
 html.ingebed .site-header .site-nav a { font-weight: 700; }
 html.ingebed .site-header .site-nav a { color: #3a2600; }
 html.ingebed .site-header .site-nav a:hover { background: rgba(58, 38, 0, 0.1); }
+
+/* Beheer: herinnering op de loterijavond, onder de snelknoppen */
+.vanavond-blok { display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: 10px 16px; margin: 12px 0 0; }
+.vanavond-blok .trekking-aankondigen { margin: 0; }
