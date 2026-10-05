@@ -8,11 +8,13 @@ export const runtime = 'nodejs';
 // ronde is dan meestal al gesloten.
 export async function POST(req: Request) {
   let naam = '';
+  let email = '';
   let rondeIdParam = '';
   try {
     const body = await req.json();
     naam = (body.naam ?? '').toString().trim();
     rondeIdParam = (body.ronde_id ?? '').toString().trim();
+    email = (body.email ?? '').toString().trim().toLowerCase();
   } catch {
     /* leeg */
   }
@@ -37,16 +39,24 @@ export async function POST(req: Request) {
     );
   }
 
-  const { data: loten } = await sb
-    .from('loten')
-    .select('lotnummer')
-    .eq('ronde_id', ronde.id)
-    .ilike('naam', naam) // hoofdletter-ongevoelig, exacte naam (geen wildcards)
-    .order('lotnummer', { ascending: true });
+  const [{ data: opNaam }, { data: opEmail }] = await Promise.all([
+    sb
+      .from('loten')
+      .select('lotnummer')
+      .eq('ronde_id', ronde.id)
+      .ilike('naam', naam), // hoofdletter-ongevoelig, exacte naam (geen wildcards)
+    // Vanuit de club-app: ook loten met het e-mailadres van het lid als contact.
+    /^[^\s@,()]+@[^\s@,()]+$/.test(email)
+      ? sb.from('loten').select('lotnummer').eq('ronde_id', ronde.id).ilike('contact', email)
+      : Promise.resolve({ data: [] as { lotnummer: number }[] }),
+  ]);
+  const nummers = [...new Set([...(opNaam ?? []), ...(opEmail ?? [])].map((l) => l.lotnummer as number))].sort(
+    (a, b) => a - b,
+  );
 
   return NextResponse.json({
     ronde: ronde.naam,
     ronde_id: ronde.id,
-    nummers: (loten ?? []).map((l) => l.lotnummer),
+    nummers,
   });
 }

@@ -1,10 +1,67 @@
 'use client';
 
-import { useState } from 'react';
-import { bewaarMijnLoten } from '@/lib/mijnLoten';
+import { useEffect, useState } from 'react';
+import { bewaarMijnLoten, leesMijnLoten, MIJN_LOTEN_EVENT } from '@/lib/mijnLoten';
+import { CLUB_LID_EVENT, leesClubLid, type ClubLid } from '@/lib/clubLid';
 import MijnLotenRij, { lotenTitel } from '@/components/MijnLotenRij';
 
+/**
+ * Lotnummers terugvinden. In de club-app weten we wie je bent: dan staan je
+ * loten vanzelf in beeld (geen zoeken). Op de losse site zoek je op naam.
+ */
 export default function LotenOpzoeken() {
+  const [lid, setLid] = useState<ClubLid | null>(null);
+  useEffect(() => {
+    const lees = () => setLid(leesClubLid());
+    lees();
+    window.addEventListener(CLUB_LID_EVENT, lees);
+    return () => window.removeEventListener(CLUB_LID_EVENT, lees);
+  }, []);
+  return lid ? <JouwLoten lid={lid} /> : <ZoekOpNaam />;
+}
+
+/** Ingelogd via de club-app: je loten in de lopende ronde, zonder zoeken. */
+function JouwLoten({ lid }: { lid: ClubLid }) {
+  const [nummers, setNummers] = useState<number[]>([]);
+  useEffect(() => {
+    let actief = true;
+    const haal = () =>
+      fetch('/api/loten/opzoeken', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ naam: lid.naam, email: lid.email }),
+      })
+        .then((r) => (r.ok ? r.json() : null))
+        .then((data: { ronde_id?: string; nummers?: number[] } | null) => {
+          if (!actief || !data) return;
+          const gevonden = data.nummers ?? [];
+          setNummers(gevonden);
+          // Onthouden op dit toestel: dan licht de live-trekking ze uit.
+          // Alleen als er iets nieuws is (opslaan seint zelf ook 'gewijzigd': anders een lus).
+          const bekend = data.ronde_id ? leesMijnLoten(data.ronde_id)?.nummers ?? [] : [];
+          if (data.ronde_id && gevonden.some((n) => !bekend.includes(n))) bewaarMijnLoten(data.ronde_id, lid.naam, gevonden);
+        })
+        .catch(() => {});
+    haal();
+    // Net loten gekocht? Dan opnieuw ophalen.
+    const opnieuw = () => setTimeout(haal, 800);
+    window.addEventListener(MIJN_LOTEN_EVENT, opnieuw);
+    return () => {
+      actief = false;
+      window.removeEventListener(MIJN_LOTEN_EVENT, opnieuw);
+    };
+  }, [lid.naam, lid.email]);
+
+  if (nummers.length === 0) return null;
+  return (
+    <div className="lot-badge" style={{ marginTop: 14 }}>
+      <MijnLotenRij nummers={nummers} titel={lotenTitel(nummers.length, lid.naam)} donker groot />
+    </div>
+  );
+}
+
+/** Losse site (niet ingelogd): zoeken op naam. */
+function ZoekOpNaam() {
   const [naam, setNaam] = useState('');
   const [bezig, setBezig] = useState(false);
   const [fout, setFout] = useState<string | null>(null);
