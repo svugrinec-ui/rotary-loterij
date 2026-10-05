@@ -1,6 +1,14 @@
 import { serviceClient } from './supabase';
 import { haalAvonden, vergelijk, type Avond } from './aanmeldingen';
 import { actieveAbonnementen, norm, stuurPush, type Abonnement } from './push';
+import { meldViaClubApp, type Bereikt } from './platformMelding';
+
+/** Al bereikt via de club-app? Dan niet nog eens via de loterij-app. */
+const nietAlBereikt = (bereikt: Bereikt[]) => {
+  const namen = new Set(bereikt.map((b) => norm(b.naam)));
+  const mails = new Set(bereikt.map((b) => norm(b.email)).filter(Boolean));
+  return (a: Abonnement) => !namen.has(norm(a.naam)) && !(a.email && mails.has(norm(a.email)));
+};
 
 /** Vandaag in Nederland: datum (YYYY-MM-DD) en uur. Vercel draait in UTC. */
 function nuInNederland(nu: Date) {
@@ -61,40 +69,49 @@ export async function herinnerZonderLot(
   rondeId: string,
   avond: Avond,
   abos?: Abonnement[],
-): Promise<{ zonderLot: number; aantal: number }> {
+): Promise<{ zonderLot: number; aantal: number; viaClub: number; viaLoterij: number }> {
   const { data: loten } = await serviceClient().from('loten').select('naam, contact').eq('ronde_id', rondeId);
   const zonderLot = vergelijk(avond.leden, (loten ?? []) as { naam: string; contact: string | null }[])
     .filter((r) => r.status === 'geen-lot')
     .map((r) => avond.leden.find((l) => l.naam === r.naam)!)
     .filter(Boolean);
+  if (zonderLot.length === 0) return { zonderLot: 0, aantal: 0, viaClub: 0, viaLoterij: 0 };
+  // Eerst via de club-app (leden zijn daar ingelogd), daarna de rest via de loterij-app.
+  const bereikt = await meldViaClubApp({ soort: 'loten', leden: zonderLot });
   const namen = new Set(zonderLot.map((l) => norm(l.naam)));
   const mails = new Set(zonderLot.map((l) => norm(l.email)).filter(Boolean));
-  const ontvangers = (abos ?? (await actieveAbonnementen())).filter(
-    (a) => namen.has(norm(a.naam)) || (!!a.email && mails.has(norm(a.email))),
-  );
-  const aantal = await stuurPush(ontvangers, {
+  const ontvangers = (abos ?? (await actieveAbonnementen()))
+    .filter((a) => namen.has(norm(a.naam)) || (!!a.email && mails.has(norm(a.email))))
+    .filter(nietAlBereikt(bereikt));
+  const viaLoterij = await stuurPush(ontvangers, {
     titel: 'Nog geen loten voor vanavond?',
     tekst: 'Je bent aangemeld voor de clubavond. Koop je loten vóór de trekking en maak kans op de Rotary Experience.',
     url: '/meedoen',
     tag: `loten-${rondeId}`,
   });
-  return { zonderLot: zonderLot.length, aantal };
+  return { zonderLot: zonderLot.length, aantal: bereikt.length + viaLoterij, viaClub: bereikt.length, viaLoterij };
 }
 
 /**
  * 2. "De trekking begint zo": naar iedereen die meespeelt in deze ronde (ook
  *    thuisspelers), herkend aan de naam of het e-mailadres bij de loten.
  */
-export async function trekkingMelding(rondeId: string): Promise<{ aantal: number; deelnemers: number }> {
+export async function trekkingMelding(
+  rondeId: string,
+): Promise<{ aantal: number; deelnemers: number; viaClub: number; viaLoterij: number }> {
   const sb = serviceClient();
   const { data: loten } = await sb.from('loten').select('naam, contact').eq('ronde_id', rondeId);
   const lijst = (loten ?? []) as { naam: string; contact: string | null }[];
   const namen = new Set(lijst.map((l) => norm(l.naam)));
   const contacten = lijst.map((l) => norm(l.contact)).filter(Boolean);
-  const meespelers = (await actieveAbonnementen()).filter(
-    (a: Abonnement) => namen.has(norm(a.naam)) || (!!a.email && contacten.some((c) => c.includes(norm(a.email)))),
-  );
-  const aantal = await stuurPush(meespelers, {
+  // Leden via de club-app; thuisspelers (en wie de club-app niet gebruikt) via de loterij-app.
+  const bereikt = lijst.length ? await meldViaClubApp({ soort: 'trekking', deelnemers: lijst }) : [];
+  const meespelers = (await actieveAbonnementen())
+    .filter(
+      (a: Abonnement) => namen.has(norm(a.naam)) || (!!a.email && contacten.some((c) => c.includes(norm(a.email)))),
+    )
+    .filter(nietAlBereikt(bereikt));
+  const viaLoterij = await stuurPush(meespelers, {
     titel: 'De trekking begint zo! 🎟️',
     tekst: 'Pak de loterij-app erbij en kijk live mee of jouw lot valt.',
     url: '/live',
@@ -102,6 +119,11 @@ export async function trekkingMelding(rondeId: string): Promise<{ aantal: number
   });
   await sb
     .from('push_meldingen')
-    .upsert({ ronde_id: rondeId, soort: 'trekking', aantal, verstuurd_op: new Date().toISOString() });
-  return { aantal, deelnemers: new Set(lijst.map((l) => norm(l.naam))).size };
+    .upsert({ ronde_id: rondeId, soort: 'trekking', aantal: bereikt.length + viaLoterij, verstuurd_op: new Date().toISOString() });
+  return {
+    aantal: bereikt.length + viaLoterij,
+    deelnemers: new Set(lijst.map((l) => norm(l.naam))).size,
+    viaClub: bereikt.length,
+    viaLoterij,
+  };
 }

@@ -4,6 +4,7 @@ import RotaryLockup from '@/components/RotaryLockup';
 import TrekkingLiveOverlay from '@/components/TrekkingLiveOverlay';
 import Meting from '@/components/Meting';
 import { MeldingenGelezen } from '@/components/LoterijMeldingen';
+import ClubKoppeling from '@/components/ClubKoppeling';
 import { getClubnaam } from '@/lib/instellingen';
 import { isDemo } from '@/lib/demo';
 import './globals.css';
@@ -30,8 +31,14 @@ export const viewport: Viewport = {
 export default async function RootLayout({ children }: { children: React.ReactNode }) {
   const club = await getClubnaam();
   return (
-    <html lang="nl">
+    <html lang="nl" suppressHydrationWarning>
       <body>
+        {/* In de club-app ingebed? Dan geen eigen kop, voet en meldingenblok (de club-app heeft die al). */}
+        <script
+          dangerouslySetInnerHTML={{
+            __html: "try{if(window.self!==window.top)document.documentElement.classList.add('ingebed')}catch(e){document.documentElement.classList.add('ingebed')}",
+          }}
+        />
         {isDemo && (
           <div className="demo-balk">
             <div className="container demo-balk-inner">
@@ -75,6 +82,7 @@ export default async function RootLayout({ children }: { children: React.ReactNo
         <TrekkingLiveOverlay />
         <Meting platformUrl={process.env.PLATFORM_URL ?? null} />
         <MeldingenGelezen />
+        <ClubKoppeling platformUrl={process.env.PLATFORM_URL ?? null} />
         <footer className="site-footer">
           <div className="container">
             <p>{club} · Loterijcommissie</p>

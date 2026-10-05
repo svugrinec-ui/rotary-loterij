@@ -1346,3 +1346,11 @@ table.data th { color: var(--muted); font-size: 13px; text-transform: uppercase;
 .meldingen-fout { color: #b23b3b !important; margin-top: 10px !important; }
 .trekking-aankondigen { display: flex; flex-wrap: wrap; align-items: center; gap: 12px; margin: 0 0 16px; }
 .trekking-aankondigen p { margin: 0; color: var(--muted); font-size: 14px; }
+
+/* Ingebed in de club-app: geen eigen kop-logo, voet, beheerknop of meldingenblok */
+html.ingebed .site-header .brand,
+html.ingebed .site-header .beheer-link,
+html.ingebed .site-footer,
+html.ingebed .demo-balk,
+html.ingebed .meldingen-kaart { display: none !important; }
+html.ingebed .site-header .header-inner { justify-content: center; }

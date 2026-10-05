@@ -1,6 +1,7 @@
 'use client';
 
 import { useState, useEffect, useRef } from 'react';
+import { CLUB_LID_EVENT, leesClubLid, zelfdeNaam } from '@/lib/clubLid';
 import { euro } from '@/lib/format';
 import {
   BUNDELS,
@@ -59,6 +60,17 @@ export default function MeedoenForm({ rondeId, betaalLinks }: Props) {
   // zonder dat hij al iets heeft aangetikt.
   const [betaalInBeeld, setBetaalInBeeld] = useState(false);
   const betaalBlok = useRef<HTMLDivElement | null>(null);
+
+  // Vanuit de club-app: je naam staat al klaar (zolang je nog niets typte).
+  useEffect(() => {
+    const vul = () => {
+      const lid = leesClubLid();
+      if (lid) setNaam((huidig) => huidig || lid.naam);
+    };
+    vul();
+    window.addEventListener(CLUB_LID_EVENT, vul);
+    return () => window.removeEventListener(CLUB_LID_EVENT, vul);
+  }, []);
 
   const huidigeBundel = bundelVoorBedrag(bedrag);
   const aantalNummers = huidigeBundel?.loten ?? 0;
@@ -162,7 +174,11 @@ export default function MeedoenForm({ rondeId, betaalLinks }: Props) {
       body: JSON.stringify({
         ronde_id: rondeId,
         naam: naam.trim(),
-        contact: null,
+        // Loten op je eigen naam vanuit de club-app: met je e-mail erbij, zodat ze zeker bij je aanmelding horen.
+        contact: (() => {
+          const lid = leesClubLid();
+          return lid?.email && zelfdeNaam(lid.naam, naam) ? lid.email : null;
+        })(),
         bedrag,
         ...(nummers ? { nummers } : {}),
       }),

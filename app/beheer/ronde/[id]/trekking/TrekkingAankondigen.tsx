@@ -2,6 +2,16 @@
 
 import { useState } from 'react';
 
+function uitkomstTekst(d: { aantal?: number; viaClub?: number; viaLoterij?: number }, leeg: string): string {
+  if (!d.aantal) return leeg;
+  const delen = [
+    d.viaClub ? `${d.viaClub} ${d.viaClub === 1 ? 'lid' : 'leden'} via de club-app` : '',
+    d.viaLoterij ? `${d.viaLoterij} ${d.viaLoterij === 1 ? 'telefoon' : 'telefoons'} via de loterij-app` : '',
+  ].filter(Boolean);
+  return `Verstuurd naar ${delen.join(' en ')}.`;
+}
+
+
 /**
  * "De trekking begint zo": een melding naar iedereen die meespeelt (ook thuis),
  * zodat de telefoons al openstaan als de eerste prijs valt.
@@ -19,13 +29,9 @@ export default function TrekkingAankondigen({ rondeId }: { rondeId: string }) {
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ ronde_id: rondeId }),
       });
-      const data = (await res.json().catch(() => ({}))) as { aantal?: number; deelnemers?: number; fout?: string };
+      const data = (await res.json().catch(() => ({}))) as { aantal?: number; viaClub?: number; viaLoterij?: number; fout?: string };
       if (!res.ok) throw new Error(data.fout ?? 'Versturen is niet gelukt.');
-      setUitkomst(
-        data.aantal
-          ? `Verstuurd naar ${data.aantal} ${data.aantal === 1 ? 'telefoon' : 'telefoons'} van meespelers.`
-          : 'Verstuurd, maar nog geen meespelers hebben meldingen aan.',
-      );
+      setUitkomst(uitkomstTekst(data, 'Verstuurd, maar nog geen meespelers hebben meldingen aan.'));
     } catch (e) {
       setUitkomst(e instanceof Error ? e.message : 'Versturen is niet gelukt.');
     } finally {
