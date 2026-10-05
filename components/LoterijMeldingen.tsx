@@ -14,6 +14,15 @@ function sleutelNaarBytes(base64: string): Uint8Array<ArrayBuffer> {
   return bytes;
 }
 
+/** Hoort dit abonnement bij de huidige sleutel? (Na een nieuwe sleutel moet het apparaat opnieuw aanmelden.) */
+function zelfdeSleutel(abo: PushSubscription, sleutel: string): boolean {
+  const oud = abo.options?.applicationServerKey;
+  if (!oud) return true;
+  const a = new Uint8Array(oud);
+  const b = sleutelNaarBytes(sleutel);
+  return a.length === b.length && a.every((x, i) => x === b[i]);
+}
+
 /**
  * Meldingen aanzetten in de loterij-app: een seintje als de trekking begint en,
  * voor wie zich voor de clubavond heeft aangemeld, om 18:00 als er nog geen
@@ -44,9 +53,9 @@ export default function LoterijMeldingen({ publiekeSleutel }: { publiekeSleutel:
       if (Notification.permission === 'denied') return setStand('geweigerd');
       const reg = await navigator.serviceWorker.getRegistration('/');
       const abo = await reg?.pushManager.getSubscription();
-      setStand(abo ? 'aan' : 'uit');
+      setStand(abo && zelfdeSleutel(abo, publiekeSleutel) ? 'aan' : 'uit');
     })().catch(() => setStand('niet-mogelijk'));
-  }, []);
+  }, [publiekeSleutel]);
 
   async function zetAan(e: React.FormEvent) {
     e.preventDefault();
@@ -61,8 +70,18 @@ export default function LoterijMeldingen({ publiekeSleutel }: { publiekeSleutel:
       }
       const reg = await navigator.serviceWorker.register('/sw.js', { scope: '/' });
       await navigator.serviceWorker.ready;
+      const bestaand = await reg.pushManager.getSubscription();
+      if (bestaand && !zelfdeSleutel(bestaand, publiekeSleutel)) {
+        // Oude aanmelding (andere sleutel) uitzetten en opnieuw aanmelden.
+        await fetch('/api/push', {
+          method: 'DELETE',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ endpoint: bestaand.endpoint }),
+        }).catch(() => {});
+        await bestaand.unsubscribe();
+      }
       const abo =
-        (await reg.pushManager.getSubscription()) ??
+        (bestaand && zelfdeSleutel(bestaand, publiekeSleutel) ? bestaand : null) ??
         (await reg.pushManager.subscribe({ userVisibleOnly: true, applicationServerKey: sleutelNaarBytes(publiekeSleutel) }));
       const res = await fetch('/api/push', {
         method: 'POST',

@@ -23,7 +23,7 @@ export interface Abonnement {
 }
 
 /** Sleutel uit de omgeving, zonder spaties, regeleinden of '=' (komen soms mee bij het plakken). */
-const schoon = (w: string | undefined) => (w ?? '').replace(/\s+/g, '').replace(/=+$/, '');
+const schoon = (w: string | undefined) => (w ?? '').replace(/\s+/g, '').replace(/^["']|["']$/g, '').replace(/=+$/, '');
 
 /** Publieke sleutel (mag in de pagina); beide namen worden geaccepteerd. */
 export function publiekeSleutel(): string {
