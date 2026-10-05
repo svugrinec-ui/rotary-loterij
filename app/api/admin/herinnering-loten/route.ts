@@ -13,8 +13,16 @@ export async function POST(req: Request) {
   if (!pushIngesteld()) return NextResponse.json({ fout: 'Meldingen zijn nog niet ingesteld.' }, { status: 400 });
   const body = (await req.json().catch(() => null)) as { ronde_id?: string; avond_id?: string } | null;
   if (!body?.ronde_id || !body.avond_id) return NextResponse.json({ fout: 'Geen ronde of avond.' }, { status: 400 });
-  const { data: ronde } = await serviceClient().from('rondes').select('id, maand').eq('id', body.ronde_id).maybeSingle();
+  const { data: ronde } = await serviceClient()
+    .from('rondes')
+    .select('id, maand, status, bijeenkomst_id')
+    .eq('id', body.ronde_id)
+    .maybeSingle();
   if (!ronde) return NextResponse.json({ fout: 'Ronde niet gevonden.' }, { status: 404 });
+  if (ronde.bijeenkomst_id !== body.avond_id) {
+    return NextResponse.json({ fout: 'Deze avond hoort niet bij deze ronde.' }, { status: 400 });
+  }
+  if (ronde.status !== 'open') return NextResponse.json({ fout: 'De ronde is niet open.' }, { status: 400 });
   const { avonden } = await haalAvonden((ronde.maand as string).slice(0, 7));
   const avond = avonden.find((a) => a.id === body.avond_id);
   if (!avond) return NextResponse.json({ fout: 'Clubavond niet gevonden.' }, { status: 404 });
