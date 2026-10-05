@@ -1354,3 +1354,9 @@ html.ingebed .site-footer,
 html.ingebed .demo-balk,
 html.ingebed .meldingen-kaart { display: none !important; }
 html.ingebed .site-header .header-inner { justify-content: center; }
+/* Ingebed: het loterijmenu is een gouden balk onder de blauwe kop van de club-app */
+html.ingebed .site-header { background: var(--rotary-gold); box-shadow: none; }
+html.ingebed .header-inner { min-height: 46px; }
+html.ingebed .site-header .site-nav a { font-weight: 700; }
+html.ingebed .site-header .site-nav a { color: #3a2600; }
+html.ingebed .site-header .site-nav a:hover { background: rgba(58, 38, 0, 0.1); }

@@ -10,7 +10,8 @@ export interface Bereikt {
 export async function meldViaClubApp(
   bericht:
     | { soort: 'loten'; leden: { naam: string; email: string }[] }
-    | { soort: 'trekking'; deelnemers: { naam: string; contact: string | null }[] },
+    | { soort: 'trekking'; deelnemers: { naam: string; contact: string | null }[] }
+    | { soort: 'thuis'; bijeenkomst_id: string; deelnemers: { naam: string; contact: string | null }[] },
 ): Promise<Bereikt[]> {
   const basis = process.env.PLATFORM_URL;
   const sleutel = process.env.LOTERIJ_KOPPELSLEUTEL;

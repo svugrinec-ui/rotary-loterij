@@ -55,6 +55,14 @@ export async function lotenHerinnering(nu = new Date()): Promise<{ verstuurd: nu
       .eq('bijeenkomst_id', avond.id)
       .maybeSingle();
     if (!ronde || ronde.status !== 'open') continue;
+    // Thuisspelers ("speel thuis mee"): de club-app beslist of dat aanstaat en stuurt het één keer per avond.
+    const { data: lotenRonde } = await sb.from('loten').select('naam, contact').eq('ronde_id', ronde.id);
+    const thuis = await meldViaClubApp({
+      soort: 'thuis',
+      bijeenkomst_id: avond.id,
+      deelnemers: (lotenRonde ?? []) as { naam: string; contact: string | null }[],
+    });
+    if (thuis.length) uit.meldingen.push(`${avond.titel}: ${thuis.length} thuisspeler(s) via de club-app`);
     if (!(await claim(ronde.id, 'loten'))) continue;
     const { zonderLot, aantal } = await herinnerZonderLot(ronde.id, avond, abos);
     await sb.from('push_meldingen').update({ aantal }).eq('ronde_id', ronde.id).eq('soort', 'loten');
