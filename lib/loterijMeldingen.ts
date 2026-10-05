@@ -1,5 +1,5 @@
 import { serviceClient } from './supabase';
-import { haalAvonden, vergelijk } from './aanmeldingen';
+import { haalAvonden, vergelijk, type Avond } from './aanmeldingen';
 import { actieveAbonnementen, norm, stuurPush, type Abonnement } from './push';
 
 /** Vandaag in Nederland: datum (YYYY-MM-DD) en uur. Vercel draait in UTC. */
@@ -47,26 +47,38 @@ export async function lotenHerinnering(nu = new Date()): Promise<{ verstuurd: nu
       .eq('bijeenkomst_id', avond.id)
       .maybeSingle();
     if (!ronde || ronde.status !== 'open') continue;
-    const { data: loten } = await sb.from('loten').select('naam, contact').eq('ronde_id', ronde.id);
-    const zonderLot = vergelijk(avond.leden, (loten ?? []) as { naam: string; contact: string | null }[])
-      .filter((r) => r.status === 'geen-lot')
-      .map((r) => avond.leden.find((l) => l.naam === r.naam)!)
-      .filter(Boolean);
-    const namen = new Set(zonderLot.map((l) => norm(l.naam)));
-    const mails = new Set(zonderLot.map((l) => norm(l.email)).filter(Boolean));
-    const ontvangers = abos.filter((a) => namen.has(norm(a.naam)) || (a.email && mails.has(norm(a.email))));
     if (!(await claim(ronde.id, 'loten'))) continue;
-    const aantal = await stuurPush(ontvangers, {
-      titel: 'Nog geen loten voor vanavond?',
-      tekst: 'Je bent aangemeld voor de clubavond. Koop je loten vóór de trekking en maak kans op de Rotary Experience.',
-      url: '/meedoen',
-      tag: `loten-${ronde.id}`,
-    });
+    const { zonderLot, aantal } = await herinnerZonderLot(ronde.id, avond, abos);
     await sb.from('push_meldingen').update({ aantal }).eq('ronde_id', ronde.id).eq('soort', 'loten');
     uit.verstuurd += aantal;
-    uit.meldingen.push(`${avond.titel}: ${zonderLot.length} zonder lot, ${aantal} melding(en)`);
+    uit.meldingen.push(`${avond.titel}: ${zonderLot} zonder lot, ${aantal} melding(en)`);
   }
   return uit;
+}
+
+/** De herinnering zelf: aangemelde leden van deze avond zonder lot in deze ronde. */
+export async function herinnerZonderLot(
+  rondeId: string,
+  avond: Avond,
+  abos?: Abonnement[],
+): Promise<{ zonderLot: number; aantal: number }> {
+  const { data: loten } = await serviceClient().from('loten').select('naam, contact').eq('ronde_id', rondeId);
+  const zonderLot = vergelijk(avond.leden, (loten ?? []) as { naam: string; contact: string | null }[])
+    .filter((r) => r.status === 'geen-lot')
+    .map((r) => avond.leden.find((l) => l.naam === r.naam)!)
+    .filter(Boolean);
+  const namen = new Set(zonderLot.map((l) => norm(l.naam)));
+  const mails = new Set(zonderLot.map((l) => norm(l.email)).filter(Boolean));
+  const ontvangers = (abos ?? (await actieveAbonnementen())).filter(
+    (a) => namen.has(norm(a.naam)) || (!!a.email && mails.has(norm(a.email))),
+  );
+  const aantal = await stuurPush(ontvangers, {
+    titel: 'Nog geen loten voor vanavond?',
+    tekst: 'Je bent aangemeld voor de clubavond. Koop je loten vóór de trekking en maak kans op de Rotary Experience.',
+    url: '/meedoen',
+    tag: `loten-${rondeId}`,
+  });
+  return { zonderLot: zonderLot.length, aantal };
 }
 
 /**

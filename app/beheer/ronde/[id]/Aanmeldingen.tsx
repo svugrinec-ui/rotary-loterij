@@ -1,6 +1,7 @@
 import Link from 'next/link';
 import { haalAvonden, vergelijk } from '@/lib/aanmeldingen';
 import type { Lot, Ronde } from '@/lib/types';
+import HerinneringKnop from './HerinneringKnop';
 
 const datum = (iso: string) =>
   new Intl.DateTimeFormat('nl-NL', { weekday: 'short', day: 'numeric', month: 'short', timeZone: 'Europe/Amsterdam' }).format(new Date(iso));
@@ -83,6 +84,11 @@ export default async function Aanmeldingen({
                 {avond.titel} · {datum(avond.begin_op)}
               </p>
               <Lijst titel="Aangemeld, nog geen lot" klasse="pill-flag" mensen={geenLot.map((u) => ({ naam: u.naam }))} leeg="Iedereen die komt doet al mee." />
+              {geenLot.length > 0 && (
+                <div style={{ margin: '-6px 0 14px' }}>
+                  <HerinneringKnop rondeId={ronde.id} avondId={avond.id} />
+                </div>
+              )}
               {twijfel.length > 0 && (
                 <Lijst
                   titel="Controleren (naam lijkt erop)"
