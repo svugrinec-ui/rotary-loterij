@@ -7,8 +7,6 @@ import TrekkingOfPagina from '@/components/TrekkingOfPagina';
 import type { Ronde, Experience, Winnaar, Doel } from '@/lib/types';
 import MeedoenForm from './MeedoenForm';
 import LotenOpzoeken from './LotenOpzoeken';
-import LoterijMeldingen from '@/components/LoterijMeldingen';
-import { publiekeSleutel } from '@/lib/push';
 import { getBetaalLinks } from '@/lib/instellingen';
 
 export const revalidate = 30;
@@ -117,10 +115,6 @@ export default async function MeedoenPage() {
           op deze pagina — met jouw lotnummers erbij. Je hoeft niets te doen.
         </p>
       </section>
-
-      {publiekeSleutel() && (
-        <LoterijMeldingen publiekeSleutel={publiekeSleutel()} />
-      )}
     </TrekkingOfPagina>
   );
 }

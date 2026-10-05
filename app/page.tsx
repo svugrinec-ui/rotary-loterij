@@ -6,8 +6,6 @@ import { maandTotalen, huidigeEnVorige } from '@/lib/opbrengst';
 import { winnaarFotos } from '@/lib/fotos';
 import LiveDoelMeter from '@/components/LiveDoelMeter';
 import FotoCarrousel from '@/components/FotoCarrousel';
-import LoterijMeldingen from '@/components/LoterijMeldingen';
-import { publiekeSleutel } from '@/lib/push';
 import type { Winnaar, Doel, Ronde } from '@/lib/types';
 
 export const revalidate = 60;
@@ -61,10 +59,6 @@ export default async function HomePage() {
           doelLabel="Deze maand voor"
         />
       </Link>
-
-      {publiekeSleutel() && (
-        <LoterijMeldingen publiekeSleutel={publiekeSleutel()} />
-      )}
 
       <section>
         <div className="section-head">

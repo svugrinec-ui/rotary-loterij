@@ -3,7 +3,7 @@ import Link from 'next/link';
 import RotaryLockup from '@/components/RotaryLockup';
 import TrekkingLiveOverlay from '@/components/TrekkingLiveOverlay';
 import Meting from '@/components/Meting';
-import { MeldingenGelezen } from '@/components/LoterijMeldingen';
+import MeldingenGelezen from '@/components/MeldingenGelezen';
 import ClubKoppeling from '@/components/ClubKoppeling';
 import { getClubnaam } from '@/lib/instellingen';
 import { isDemo } from '@/lib/demo';
