@@ -42,28 +42,30 @@ export async function POST(req: Request) {
   const [{ data: opNaam }, { data: opEmail }] = await Promise.all([
     sb
       .from('loten')
-      .select('lotnummer, betaald, bedrag')
+      .select('lotnummer, bedrag, betaalwijze')
       .eq('ronde_id', ronde.id)
       .ilike('naam', naam), // hoofdletter-ongevoelig, exacte naam (geen wildcards)
     // Vanuit de club-app: ook loten met het e-mailadres van het lid als contact.
     /^[^\s@,()]+@[^\s@,()]+$/.test(email)
-      ? sb.from('loten').select('lotnummer, betaald, bedrag').eq('ronde_id', ronde.id).ilike('contact', email)
-      : Promise.resolve({ data: [] as { lotnummer: number; betaald: boolean; bedrag: number }[] }),
+      ? sb.from('loten').select('lotnummer, bedrag, betaalwijze').eq('ronde_id', ronde.id).ilike('contact', email)
+      : Promise.resolve({ data: [] as { lotnummer: number; bedrag: number; betaalwijze: string | null }[] }),
   ]);
   // Per lotnummer één keer (een lot kan zowel op naam als op e-mail gevonden zijn).
-  const perNummer = new Map<number, { betaald: boolean; bedrag: number }>();
-  for (const l of [...(opNaam ?? []), ...(opEmail ?? [])] as { lotnummer: number; betaald: boolean; bedrag: number }[]) {
-    perNummer.set(l.lotnummer, { betaald: !!l.betaald, bedrag: Number(l.bedrag ?? 0) });
+  const perNummer = new Map<number, { bedrag: number; betaalwijze: string | null }>();
+  for (const l of [...(opNaam ?? []), ...(opEmail ?? [])] as { lotnummer: number; bedrag: number; betaalwijze: string | null }[]) {
+    perNummer.set(l.lotnummer, { bedrag: Number(l.bedrag ?? 0), betaalwijze: l.betaalwijze ?? null });
   }
   const nummers = [...perNummer.keys()].sort((a, b) => a - b);
-  const som = (alleenOpen: boolean) =>
-    Math.round([...perNummer.values()].filter((l) => !alleenOpen || !l.betaald).reduce((s, l) => s + l.bedrag, 0) * 100) / 100;
+  const totaal = Math.round([...perNummer.values()].reduce((s, l) => s + l.bedrag, 0) * 100) / 100;
+  // Gekozen betaalwijze (bank/contant): dan is de betaalstap gezet. 'betaald' zegt hier
+  // niets: elk lot doet meteen mee; de commissie draait het terug als er niet betaald is.
+  const betaalwijze = [...perNummer.values()].find((l) => l.betaalwijze)?.betaalwijze ?? null;
 
   return NextResponse.json({
     ronde: ronde.naam,
     ronde_id: ronde.id,
     nummers,
-    totaal: som(false), // wat deze loten samen kosten
-    openstaand: som(true), // nog niet afgevinkt door de penningmeester
+    totaal, // wat deze loten samen kosten
+    betaalwijze,
   });
 }

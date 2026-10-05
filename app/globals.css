@@ -1364,3 +1364,4 @@ html.ingebed .alleen-los { display: none !important; }
 /* Stap 3 ingeklapt nadat de betaling is gestart */
 .betaal-ingeklapt { text-align: center; margin-top: 20px; padding: 16px 18px; }
 .betaal-ingeklapt p { margin: 6px 0 8px; }
+.betaal-ingeklapt .knop-link { font-size: 14px; }

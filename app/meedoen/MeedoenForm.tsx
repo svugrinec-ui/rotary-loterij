@@ -50,8 +50,6 @@ export default function MeedoenForm({ rondeId, betaalLinks }: Props) {
   // na de trekking)? Dan is het lotenmoment al geweest en staat de betaalstap
   // vooraan in de stappenbalk.
   const [hersteld, setHersteld] = useState(false);
-  // In de club-app: alles al betaald (volgens de penningmeester)? Dan geen betaalstap.
-  const [alBetaald, setAlBetaald] = useState(false);
   const [inApp, setInApp] = useState(false);
   // Is de betaalstap gezet (contant gekozen of op de bankknop getikt)? Dan
   // licht stap 3 op in de stappenbalk.
@@ -84,7 +82,7 @@ export default function MeedoenForm({ rondeId, betaalLinks }: Props) {
         body: JSON.stringify({ naam: lid.naam, email: lid.email }),
       })
         .then((r) => (r.ok ? r.json() : null))
-        .then((d: { ronde_id?: string; nummers?: number[]; totaal?: number; openstaand?: number } | null) => {
+        .then((d: { ronde_id?: string; nummers?: number[]; totaal?: number; betaalwijze?: 'bank' | 'cash' | null } | null) => {
           if (!d || (d.ronde_id && d.ronde_id !== rondeId)) return;
           if (!d.nummers?.length) {
             // Geen loten op jouw naam. Staan er op dit toestel nog loten van iemand anders
@@ -96,11 +94,15 @@ export default function MeedoenForm({ rondeId, betaalLinks }: Props) {
             }
             return;
           }
-          const open = d.openstaand ?? 0;
-          setResultaat({ nummers: d.nummers, naam: lid.naam, bedrag: open > 0 ? open : d.totaal ?? 0 });
+          setResultaat({ nummers: d.nummers, naam: lid.naam, bedrag: d.totaal ?? 0 });
           setHersteld(true);
-          setAlBetaald(open === 0);
-          bewaarMijnLoten(rondeId, lid.naam, d.nummers, open > 0 ? open : d.totaal);
+          bewaarMijnLoten(rondeId, lid.naam, d.nummers, d.totaal);
+          // Al een betaalwijze gekozen? Dan is stap 3 gezet en staat hij ingeklapt.
+          if (d.betaalwijze) {
+            setBetaalwijze(d.betaalwijze);
+            setBetaalStap(true);
+            bewaarBetaalStap(rondeId, d.betaalwijze);
+          }
         })
         .catch(() => {});
     };
@@ -336,7 +338,6 @@ export default function MeedoenForm({ rondeId, betaalLinks }: Props) {
 
   /** Terug naar stap 1. Met eigenNaam (club-app, "Meer loten kopen") staat je eigen naam al klaar. */
   function opnieuw(eigenNaam = false) {
-    setAlBetaald(false);
     setUitgeklapt(false);
     setBetaalStap(false);
     setBetaalInBeeld(false);
@@ -384,11 +385,7 @@ export default function MeedoenForm({ rondeId, betaalLinks }: Props) {
             : 'Bij de trekking hoef je niets te doen: die verschijnt vanzelf op dit scherm, met jouw nummers erbij.'}
         </p>
 
-        {alBetaald ? (
-          <div className="notice notice-ok" style={{ marginTop: 20, textAlign: 'center' }}>
-            <strong>✓ Betaald</strong> — je doet mee. Nu is het wachten op de trekking.
-          </div>
-        ) : betaalStap && !uitgeklapt ? (
+        {betaalStap && !uitgeklapt ? (
           // Betaalstap gezet: kort samengevat, met een weg terug als het niet lukte.
           <div className="panel betaal-ingeklapt" ref={betaalBlok}>
             <div className="betaal-eyebrow">Stap 3 · Betalen</div>
@@ -480,6 +477,7 @@ export default function MeedoenForm({ rondeId, betaalLinks }: Props) {
                   rel="noopener noreferrer"
                   style={{ marginTop: 14 }}
                   onClick={() => {
+                    kiesBetaalwijze('bank'); // ook in de loterij vastleggen (na een herstart weet de app het nog)
                     setBetaalStap(true);
                     setUitgeklapt(false);
                     bewaarBetaalStap(rondeId, 'bank');
