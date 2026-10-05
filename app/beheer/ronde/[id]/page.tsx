@@ -16,7 +16,6 @@ import {
   verwijderRonde,
 } from '@/lib/actions';
 import ConfirmButton from '@/components/ConfirmButton';
-import Aanmeldingen from './Aanmeldingen';
 import BeheerLive from '@/components/BeheerLive';
 
 export const dynamic = 'force-dynamic';
@@ -26,11 +25,11 @@ export default async function RondeBeheerPage({
   searchParams,
 }: {
   params: Promise<{ id: string }>;
-  searchParams: Promise<{ avond?: string; fout?: string }>;
+  searchParams: Promise<{ fout?: string }>;
 }) {
   if (!(await isAdmin())) redirect('/beheer');
   const { id } = await params;
-  const { avond, fout } = await searchParams;
+  const { fout } = await searchParams;
   const sb = serviceClient();
 
   const { data: rondeData } = await sb
@@ -220,9 +219,6 @@ export default async function RondeBeheerPage({
           ))
         )}
       </section>
-
-      {/* ---------- Wie komt er, en doet al mee? (koppeling club-app) ---------- */}
-      <Aanmeldingen ronde={ronde} loten={loten} gekozen={avond} />
       <BeheerLive rondeIds={[ronde.id]} />
 
       {/* ---------- Opbrengst deze ronde ---------- */}

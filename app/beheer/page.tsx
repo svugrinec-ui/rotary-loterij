@@ -154,7 +154,7 @@ export default async function BeheerPage({
     datum: string;
     vandaag: boolean;
     geenLot: string[];
-    twijfel: number;
+    twijfel: { naam: string; lot?: string }[];
     log: string | null;
   } | null = null;
   if (openRonde?.bijeenkomst_id) {
@@ -174,7 +174,7 @@ export default async function BeheerPage({
         datum: new Intl.DateTimeFormat('nl-NL', { weekday: 'long', day: 'numeric', month: 'long', timeZone: 'Europe/Amsterdam' }).format(new Date(avond.begin_op)),
         vandaag: dagVan(avond.begin_op) === vandaag,
         geenLot: uitslag.filter((u) => u.status === 'geen-lot').map((u) => u.naam).sort((x, y) => x.localeCompare(y, 'nl')),
-        twijfel: uitslag.filter((u) => u.status === 'controleren').length,
+        twijfel: uitslag.filter((u) => u.status === 'controleren').map((u) => ({ naam: u.naam, lot: u.lot })),
         log: logTekst(log),
       };
     }
@@ -243,11 +243,19 @@ export default async function BeheerPage({
               ))}
             </ul>
           )}
-          {aanmeldingen.twijfel > 0 && (
-            <p className="sub" style={{ margin: '8px 0 0' }}>
-              Controleren: {aanmeldingen.twijfel} (naam lijkt erop) ·{' '}
-              <Link href={`/beheer/ronde/${openRonde.id}#aanmeldingen`}>bekijk bij de ronde →</Link>
-            </p>
+          {aanmeldingen.twijfel.length > 0 && (
+            // Alleen bij loten buiten de club-app (losse site, QR, door de commissie ingevoerd):
+            // de naam lijkt erop maar is niet gelijk. Even nakijken.
+            <div className="sub" style={{ margin: '10px 0 0' }}>
+              <strong>Controleren</strong> (naam lijkt erop):
+              <ul style={{ margin: '4px 0 0', paddingLeft: 18 }}>
+                {aanmeldingen.twijfel.map((t) => (
+                  <li key={t.naam}>
+                    {t.naam} · lot op naam van &ldquo;{t.lot}&rdquo;
+                  </li>
+                ))}
+              </ul>
+            </div>
           )}
           <div style={{ marginTop: 12 }}>
             {aanmeldingen.vandaag ? (
