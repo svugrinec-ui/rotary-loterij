@@ -58,6 +58,8 @@ export default function MeedoenForm({ rondeId, betaalLinks }: Props) {
   const [betaalStap, setBetaalStap] = useState(false);
   // Is de bezoeker terug uit de bank-app/het betaaltabblad?
   const [terugVanBank, setTerugVanBank] = useState(false);
+  // Na "Betaal via je bank" of "Contant" klapt stap 3 in; met de link eronder weer open.
+  const [uitgeklapt, setUitgeklapt] = useState(false);
   const wasWeg = useRef(false);
   // Staat het betaalblok in beeld? Dan is stap 3 waar de bezoeker is, ook
   // zonder dat hij al iets heeft aangetikt.
@@ -305,6 +307,7 @@ export default function MeedoenForm({ rondeId, betaalLinks }: Props) {
     // Contant kiezen ís de betaalstap zetten: dan licht stap 3 op.
     if (wijze === 'cash') {
       setBetaalStap(true);
+      setUitgeklapt(false);
       bewaarBetaalStap(rondeId, 'cash');
     }
     if (!resultaat) return;
@@ -334,6 +337,7 @@ export default function MeedoenForm({ rondeId, betaalLinks }: Props) {
   /** Terug naar stap 1. Met eigenNaam (club-app, "Meer loten kopen") staat je eigen naam al klaar. */
   function opnieuw(eigenNaam = false) {
     setAlBetaald(false);
+    setUitgeklapt(false);
     setBetaalStap(false);
     setBetaalInBeeld(false);
     setTerugVanBank(false);
@@ -383,6 +387,27 @@ export default function MeedoenForm({ rondeId, betaalLinks }: Props) {
         {alBetaald ? (
           <div className="notice notice-ok" style={{ marginTop: 20, textAlign: 'center' }}>
             <strong>✓ Betaald</strong> — je doet mee. Nu is het wachten op de trekking.
+          </div>
+        ) : betaalStap && !uitgeklapt ? (
+          // Betaalstap gezet: kort samengevat, met een weg terug als het niet lukte.
+          <div className="panel betaal-ingeklapt" ref={betaalBlok}>
+            <div className="betaal-eyebrow">Stap 3 · Betalen</div>
+            <p>
+              <strong>
+                {euro(resultaat.bedrag)} {betaalwijze === 'cash' ? 'contant aan de commissie' : 'via je bank'} ✓
+              </strong>
+              <br />
+              <span className="muted">De penningmeester vinkt je betaling af.</span>
+            </p>
+            {betaalwijze === 'cash' ? (
+              <button type="button" className="knop-link" onClick={() => { setUitgeklapt(true); kiesBetaalwijze('bank'); }}>
+                Toch via de bank betalen?
+              </button>
+            ) : (
+              <button type="button" className="knop-link" onClick={() => { setUitgeklapt(true); setTerugVanBank(false); }}>
+                Betaling niet gelukt? Opnieuw betalen
+              </button>
+            )}
           </div>
         ) : (
         <div
@@ -456,6 +481,7 @@ export default function MeedoenForm({ rondeId, betaalLinks }: Props) {
                   style={{ marginTop: 14 }}
                   onClick={() => {
                     setBetaalStap(true);
+                    setUitgeklapt(false);
                     bewaarBetaalStap(rondeId, 'bank');
                   }}
                 >
