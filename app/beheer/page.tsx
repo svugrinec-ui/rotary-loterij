@@ -98,7 +98,15 @@ export default async function BeheerPage({
   // Zichtbaar: de rondes van de afgelopen 5 weken en alles wat nog komt;
   // oudere rondes staan ingeklapt eronder.
   const grensRecent = new Date(Date.now() - 35 * 864e5).toLocaleDateString('sv-SE', { timeZone: 'Europe/Amsterdam' });
-  const recenteRondes = rondes.filter((r) => r.maand >= grensRecent);
+  // De actuele ronde bovenaan: de open ronde, of anders de eerstvolgende op datum.
+  const vandaagIso = new Date().toLocaleDateString('sv-SE', { timeZone: 'Europe/Amsterdam' });
+  const actueel =
+    rondes.find((r) => r.status === 'open') ??
+    [...rondes].filter((r) => r.maand >= vandaagIso && r.status !== 'getrokken').sort((a, b) => a.maand.localeCompare(b.maand))[0] ??
+    null;
+  const recenteRondes = rondes
+    .filter((r) => r.maand >= grensRecent || r.id === actueel?.id)
+    .sort((a, b) => (a.id === actueel?.id ? -1 : b.id === actueel?.id ? 1 : 0));
   const oudereRondes = rondes.filter((r) => r.maand < grensRecent);
   // Welke rondes hebben al een hoofdprijs (experience)?
   const { data: prijsData } = await sb.from('experiences').select('ronde_id');
@@ -312,7 +320,7 @@ export default async function BeheerPage({
               </thead>
               <tbody>
                 {recenteRondes.map((r) => (
-                  <tr key={r.id}>
+                  <tr key={r.id} className={r.id === actueel?.id ? 'ronde-actueel' : undefined}>
                     <td style={{ textAlign: 'center' }}>
                       <input
                         type="checkbox"
@@ -322,6 +330,7 @@ export default async function BeheerPage({
                       />
                     </td>
                     <td>
+                      {r.id === actueel?.id && <span className="pill pill-actueel">Actueel</span>}
                       <Link href={`/beheer/ronde/${r.id}`}>{r.naam}</Link>
                       {!metPrijs.has(r.id) && r.status !== 'getrokken' && (
                         <span className="pill pill-flag" title="Voeg een hoofdprijs toe; daarna kan de ronde open">

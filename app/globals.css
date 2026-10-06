@@ -1369,3 +1369,16 @@ html.ingebed .alleen-los { display: none !important; }
 .aanmeld-kop .sub { text-transform: capitalize; }
 .aanmeld-namen { list-style: none; display: flex; flex-wrap: wrap; gap: 6px; margin: 10px 0 0; padding: 0; }
 .aanmeld-namen li { background: #fdf0d6; color: #6b4500; border-radius: 999px; padding: 4px 10px; font-size: 14px; font-weight: 600; }
+
+/* Beheer: de actuele ronde bovenaan, met een opvallend kader */
+tr.ronde-actueel td { background: #fff8e8; border-top: 2px solid var(--rotary-gold); border-bottom: 2px solid var(--rotary-gold); }
+tr.ronde-actueel td:first-child { border-left: 2px solid var(--rotary-gold); }
+tr.ronde-actueel td:last-child { border-right: 2px solid var(--rotary-gold); }
+tr.ronde-actueel td a { font-weight: 700; }
+.pill-actueel { background: var(--rotary-gold); color: #3a2600; margin-right: 8px; }
+@media (max-width: 600px) {
+  table.data tr.ronde-actueel { border: 2px solid var(--rotary-gold); background: #fff8e8; }
+  tr.ronde-actueel td,
+  tr.ronde-actueel td:first-child,
+  tr.ronde-actueel td:last-child { border: none; background: transparent; }
+}
