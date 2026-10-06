@@ -20,7 +20,8 @@ function toegestaan(req: Request): boolean {
 async function afhandelen(req: Request) {
   if (!toegestaan(req)) return NextResponse.json({ fout: 'Niet toegestaan' }, { status: 401 });
   const uitkomst = await syncRondes();
-  revalidatePath('/beheer');
+  // Nieuwe naam of datum meteen overal zichtbaar, niet pas na de cache (30–60 s).
+  for (const pad of ['/beheer', '/', '/meedoen', '/live', '/goede-doelen']) revalidatePath(pad);
   return NextResponse.json(uitkomst, { status: uitkomst.fout ? 502 : 200 });
 }
 
